@@ -25,13 +25,37 @@ public class AudioPlayer {
     HttpMediaSource mMediaSource = null;
     MediaFormat mFormat = null;
     RingBuffer mRingBuffer = null;
-    String mUrl = null;
 
-    public AudioPlayer(final Context ctx, final String url) {
+    public static float MAX_DELAY_SECONDS  = 60.0f;
+    boolean mOk = false;
+    boolean mPlay = false;
+
+    public AudioPlayer(final Context ctx, final HttpMediaSource mediaSource) throws Exception {
         context = ctx;
-        mUrl = url;
-        play();
+        mMediaSource = mediaSource;
+        mExtractor = new MediaExtractor();
+        mExtractor.setDataSource(mMediaSource);
+        Log.d(MainActivity.TAG, "Set data source");
+        mExtractor.selectTrack(0);
+        mFormat = mExtractor.getTrackFormat(0);
+
+        Log.d(MainActivity.TAG, "Format: " + mFormat.getString(MediaFormat.KEY_MIME));
+
+        mDecoder = MediaCodec.createDecoderByType(mFormat.getString(MediaFormat.KEY_MIME));
+        mDecoder.configure(
+                MediaFormat.createAudioFormat(
+                        mFormat.getString(MediaFormat.KEY_MIME),
+                        mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE),
+                        mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)),
+                null, null, 0);
+        mRingBuffer = new RingBuffer((int)(MAX_DELAY_SECONDS*mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE))*mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)*2, 0);
+        mOk = true;
+        mPlay = true;
     }
+
+    public void stop() {mPlay = false;}
+
+    public boolean ok() {return mOk;}
 
     public void setDelay(float delay) {
         long delayInSamples = (long)(delay*mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
@@ -40,29 +64,12 @@ public class AudioPlayer {
         mRingBuffer.setHeadOffset(delayInBytes);
     }
 
-    private void play(){
+    public void play(){
         new Thread()
         {
             @Override
             public void run() {
                     try {
-                        mExtractor = new MediaExtractor();
-                        mMediaSource = new HttpMediaSource(mUrl);
-                        mExtractor.setDataSource(mMediaSource);
-                        Log.d(MainActivity.TAG, "Set data source");
-                        mExtractor.selectTrack(0);
-                        mFormat = mExtractor.getTrackFormat(0);
-
-                        Log.d(MainActivity.TAG, "Format: " + mFormat.getString(MediaFormat.KEY_MIME));
-
-                        mDecoder = MediaCodec.createDecoderByType(mFormat.getString(MediaFormat.KEY_MIME));
-                        mDecoder.configure(
-                                MediaFormat.createAudioFormat(
-                                        mFormat.getString(MediaFormat.KEY_MIME),
-                                        mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE),
-                                        mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)),
-                                null, null, 0);
-                        mRingBuffer = new RingBuffer(2*10*mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)*mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT), 0);
                         mDecoder.start();
                         int inputIndex = mDecoder.dequeueInputBuffer(-1);
                         ByteBuffer inputBuffer = mDecoder.getInputBuffer(inputIndex);
@@ -72,7 +79,7 @@ public class AudioPlayer {
                         AudioTrack audioTrack = null;
 
                         int read = mExtractor.readSampleData(inputBuffer, 0);
-                        while (read > 0) {
+                        while (mPlay && read > 0) {
                             mDecoder.queueInputBuffer(inputIndex, 0, read, mExtractor.getSampleTime(), 0);
 
                             mExtractor.advance();
@@ -125,6 +132,7 @@ public class AudioPlayer {
                             read = mExtractor.readSampleData(inputBuffer, 0);
                         }
                     } catch (Exception e) {
+                        mOk = false;
                         Log.d(MainActivity.TAG, e.getMessage());
                     }
             }

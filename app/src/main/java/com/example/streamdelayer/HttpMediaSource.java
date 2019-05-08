@@ -13,28 +13,17 @@ public class HttpMediaSource extends MediaDataSource {
 
     BufferedInputStream mStream = null;
     HttpURLConnection mUrlConnection = null;
+    boolean mOk = false;
 
-    Map<String, List<String>> mHeaders = null;
-
-    public HttpMediaSource(String url) {
-        try {
-            mUrlConnection = (HttpURLConnection) (new URL(url)).openConnection();
-            Log.d(MainActivity.TAG, "Connection established");
-            mStream = new BufferedInputStream(mUrlConnection.getInputStream());
-            Log.d(MainActivity.TAG, "Got input stream");
-            mHeaders = mUrlConnection.getHeaderFields();
-            for(String key : mHeaders.keySet()) {
-                Log.d(MainActivity.TAG, "Header key: "+key);
-                for(String val : mHeaders.get(key)) {
-                    Log.d(MainActivity.TAG, "Header val: "+val);
-                }
-            }
-        } catch (Exception e) {
-            Log.d(MainActivity.TAG, e.getMessage());
-        }
+    public HttpMediaSource(String url) throws Exception {
+        mUrlConnection = (HttpURLConnection) (new URL(url)).openConnection();
+        Log.d(MainActivity.TAG, "Connection established");
+        mStream = new BufferedInputStream(mUrlConnection.getInputStream());
+        Log.d(MainActivity.TAG, "Got input stream");
+        mOk = true;
     }
 
-    Map<String, List<String>> getHeaders() {return mHeaders;}
+    public boolean ok() {return mOk;}
 
     @Override
     public long getSize() { return Long.MAX_VALUE;}
@@ -45,6 +34,7 @@ public class HttpMediaSource extends MediaDataSource {
             return mStream.read(outBuffer, offset, size);
         } catch (Exception e) {
             Log.d(MainActivity.TAG, e.getMessage());
+            mOk = false;
             return 0;
         }
     }

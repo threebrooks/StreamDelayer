@@ -17,9 +17,8 @@ import android.widget.SeekBar;
 public class MainActivity extends AppCompatActivity {
     public static String TAG = "StreamDelayer";
 
-    AudioPlayer mPlayer = null;
     Context mCtx = null;
-    private static final String ALLOWED_URI_CHARS = "@#&=*+-_.,:!?()/~'%";
+    StreamPlayer mStreamPlayer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,39 +28,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // https://bvb-live.cast.addradio.de/bvb/live/mp3/high
-                try {
-                    mPlayer = new AudioPlayer(
-                            mCtx,
-                            Uri.encode("https://wpr-ice.streamguys1.com/wpr-ideas-mp3-64", ALLOWED_URI_CHARS));
-                } catch (Exception e) {
-                    Log.d(MainActivity.TAG, e.getMessage());
-                }
-            }
-        });
-
-        SeekBar delayBar = findViewById(R.id.seekBar);
-        delayBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mPlayer.setDelay(10.0f*(progress/100.0f));
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
+        mStreamPlayer = new StreamPlayer(this, findViewById(R.id.streamPlayerLL));
     }
 
     @Override
