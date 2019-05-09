@@ -1,11 +1,17 @@
 package com.example.streamdelayer;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -14,11 +20,15 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.SeekBar;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
     public static String TAG = "StreamDelayer";
 
     Context mCtx = null;
     StreamPlayer mStreamPlayer = null;
+    MusicPlayer mMusicPlayer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,7 +38,19 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            // Should we show an explanation?
+            if (shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                // Explain to the user why we need to read the contacts
+            }
+
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+            return;
+        }
+
         mStreamPlayer = new StreamPlayer(this, findViewById(R.id.streamPlayerLL));
+        mMusicPlayer = new MusicPlayer(this, findViewById(R.id.musicPlayerLL));
+
     }
 
     @Override
