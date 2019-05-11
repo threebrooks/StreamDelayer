@@ -113,7 +113,7 @@ public class StreamPlayer {
         mRootView = rootView;
 
         mStreamURLEditText = mRootView.findViewById(R.id.streamURLEditText);
-        mUrl = "https://wpr-ice.streamguys1.com/wpr-ideas-mp3-64";
+        mUrl = "https://bvb-live.cast.addradio.de/bvb/live/mp3/high";
         mStreamURLEditText.setText(mUrl);
         mStreamURLEditText.addTextChangedListener(mStreamURLTextWatcher);
 

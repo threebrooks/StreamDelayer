@@ -1,14 +1,16 @@
 package com.example.streamdelayer;
 
+import android.net.Uri;
+
 public class MusicListItem
 {
     private String mSongName;
-    private String mUrl;
+    private Uri mUri;
 
-    public MusicListItem(String name, String url)
+    public MusicListItem(String name, Uri uri)
     {
         mSongName = name;
-        mUrl = url;
+        mUri = uri;
     }
 
     public String getName()
@@ -21,13 +23,13 @@ public class MusicListItem
         mSongName = name;
     }
 
-    public String getUrl()
+    public Uri getUrl()
     {
-        return mUrl;
+        return mUri;
     }
 
-    public void setUrl(String url)
+    public void setUri(Uri uri)
     {
-        mUrl = url;
+        mUri = uri;
     }
 }

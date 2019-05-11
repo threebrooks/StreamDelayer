@@ -2,6 +2,7 @@ package com.example.streamdelayer;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -73,5 +74,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(requestCode) {
+            case MusicPlayer.MUSIC_FOLDER_INTENT:
+                mMusicPlayer.setMusicFolder(data.getData());
+                break;
+        }
     }
 }
