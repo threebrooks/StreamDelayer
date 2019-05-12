@@ -6,40 +6,11 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <android.support.v4.widget.Space
-        android:layout_width="wrap_content"
-        android:layout_height="@dimen/button_row_gap" />
-
-    <!-- URL -->
-    <EditText
-        android:id="@+id/streamURLEditText"
+    <com.example.streamdelayer.DelayCircleView
+        android:id="@+id/delayCircleView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="textUri"
-        android:text="Stream URL"
-        android:gravity="center"
-        android:background="@color/l3Whiten"/>
-
-    <android.support.v4.widget.Space
-        android:layout_width="wrap_content"
-        android:layout_height="@dimen/button_row_gap" />
-
-    <!-- Stop/Play buttons -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center">
-
-        <Button
-            android:id="@+id/streamStartStopButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Start"
-            android:gravity="center"
-            android:background="@drawable/button"/>
-    </LinearLayout>
+        android:layout_height="0dip"
+        android:layout_weight="7"/>
 
     <android.support.v4.widget.Space
         android:layout_width="wrap_content"
@@ -48,9 +19,12 @@
     <!-- Delay buttons -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dip"
+        android:layout_weight="1"
         android:orientation="horizontal"
-        android:gravity="center">
+        android:gravity="center"
+        android:layout_marginLeft="@dimen/button_row_gap"
+        android:layout_marginRight="@dimen/button_row_gap">
 
         <Button
             android:id="@+id/streamDelayMinus5Button"
@@ -59,7 +33,7 @@
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
             android:text="-5"
-            android:background="@drawable/button"/>
+            android:background="@drawable/button_left"/>
         <Button
             android:id="@+id/streamDelayMinusPoint5Button"
             android:layout_width="0dip"
@@ -67,16 +41,7 @@
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
             android:text="-0.5"
-            android:background="@drawable/button"/>
-        <TextView
-            android:id="@+id/streamDelaySecondsTextView"
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center_horizontal|center_vertical"
-            android:text="0.0s"
-            android:textAppearance="@style/TextAppearance.AppCompat.Large"
-            android:textSize="30sp" />
+            android:background="@drawable/button_center"/>
         <Button
             android:id="@+id/streamDelayPlusPoint5Button"
             android:layout_width="0dip"
@@ -84,7 +49,7 @@
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
             android:text="+0.5"
-            android:background="@drawable/button"/>
+            android:background="@drawable/button_center"/>
         <Button
             android:id="@+id/streamDelayPlus5Button"
             android:layout_width="0dip"
@@ -92,31 +57,19 @@
             android:gravity="center_vertical|center_horizontal"
             android:layout_weight="1"
             android:text="+5"
-            android:background="@drawable/button"/>
+            android:background="@drawable/button_center"/>
+        <Button
+            android:id="@+id/streamDelayTapButton"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center_horizontal"
+            android:text="TAP"
+            android:background="@drawable/button_right" />
     </LinearLayout>
 
     <android.support.v4.widget.Space
         android:layout_width="wrap_content"
         android:layout_height="@dimen/button_row_gap" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-      <SeekBar
-        android:id="@+id/streamDelaySeekBar"
-        android:layout_width="0dip"
-        android:layout_height="match_parent"
-          android:layout_gravity="center_vertical"
-          android:layout_weight="2"/>
-        <Button
-            android:id="@+id/streamDelayTapButton"
-            android:layout_width="0dip"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center_vertical|center_horizontal"
-            android:text="TAP"
-            android:background="@drawable/button" />
-    </LinearLayout>
 
 </LinearLayout>

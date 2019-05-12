@@ -23,7 +23,15 @@ public class RingBuffer {
     }
 
     synchronized public void setHeadOffset(long offset) {
-        head = tail+offset;
+        tail = head-offset;
+    }
+
+    public float getHeadPercentage() {
+        return wrapped(head)/(float)buffer.length;
+    }
+
+    public float getTailPercentage() {
+        return wrapped(tail)/(float)buffer.length;
     }
 
     synchronized public void add(byte[] toAdd, int size) {

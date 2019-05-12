@@ -4,6 +4,8 @@ import android.content.Context;
 import android.net.Uri;
 import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.AppCompatImageButton;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -12,6 +14,10 @@ import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
 public class StreamPlayer {
 
     AudioPlayer mPlayer = null;
@@ -19,33 +25,25 @@ public class StreamPlayer {
 
     View mRootView = null;
     Context mCtx = null;
-    EditText mStreamURLEditText = null;
-    AppCompatButton mStreamStartStopButton = null;
-    TextView mStreamDelaySecondsTV = null;
-    SeekBar mStreamDelaySeekBar = null;
 
     AppCompatButton mStreamDelayMinus5Button = null;
     AppCompatButton mStreamDelayMinusPoint5Button = null;
     AppCompatButton mStreamDelayPlusPoint5Button = null;
     AppCompatButton mStreamDelayPlus5Button = null;
     AppCompatButton mStreamDelayTapButton = null;
+    DelayCircleView mDelayCircleView = null;
+
+    RecyclerView mStreamList = null;
 
     float mCurrentDelay = 0.0f;
     boolean mPlay = false;
-    String mUrl = "";
+    URL mUrl = null;
     long mStreamDelayTapMillisStart = 0;
 
-    View.OnClickListener mStreamStartStopCL = new  View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            mPlay = !mPlay;
-            if (mPlay) {
-                mStreamStartStopButton.setText("Trying to play...");
-            } else {
-                mStreamStartStopButton.setText("PLAY");
-            }
-        }
-    };
+    public void playStream(URL url) {
+        mUrl = url;
+        mPlay = !mPlay;
+    }
 
     View.OnClickListener mDelayButtonsCL = new  View.OnClickListener() {
         @Override
@@ -72,58 +70,11 @@ public class StreamPlayer {
         }
     };
 
-    TextWatcher mStreamURLTextWatcher = new TextWatcher() {
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-            mUrl = s.toString();
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {}
-    };
-
-    private float seekBarProgressToSeconds(int progress) {
-        return AudioPlayer.MAX_DELAY_SECONDS*(progress/(float)mStreamDelaySeekBar.getMax());
-    }
-
-    private int seekBarSecondsToProgress(float seconds) {
-        return (int)((seconds/AudioPlayer.MAX_DELAY_SECONDS)*mStreamDelaySeekBar.getMax());
-    }
-
-
-    SeekBar.OnSeekBarChangeListener mSeekBarCL = new SeekBar.OnSeekBarChangeListener() {
-
-        @Override
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if (fromUser) setDelay(seekBarProgressToSeconds(progress));
-        }
-
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {}
-
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {}
-    };
-
     public StreamPlayer(Context ctx, View rootView) {
         mCtx = ctx;
         mRootView = rootView;
 
-        mStreamURLEditText = mRootView.findViewById(R.id.streamURLEditText);
-        mUrl = "https://bvb-live.cast.addradio.de/bvb/live/mp3/high";
-        mStreamURLEditText.setText(mUrl);
-        mStreamURLEditText.addTextChangedListener(mStreamURLTextWatcher);
-
-        mStreamStartStopButton = mRootView.findViewById(R.id.streamStartStopButton);
-        mStreamStartStopButton.setOnClickListener(mStreamStartStopCL);
-
-        mStreamDelaySecondsTV = mRootView.findViewById(R.id.streamDelaySecondsTextView);
-
-        mStreamDelaySeekBar = mRootView.findViewById(R.id.streamDelaySeekBar);
-        mStreamDelaySeekBar.setOnSeekBarChangeListener(mSeekBarCL);
+        mDelayCircleView = mRootView.findViewById(R.id.delayCircleView);
 
         mStreamDelayMinus5Button = mRootView.findViewById(R.id.streamDelayMinus5Button);
         mStreamDelayMinus5Button.setOnClickListener(mDelayButtonsCL);
@@ -136,7 +87,23 @@ public class StreamPlayer {
         mStreamDelayTapButton = mRootView.findViewById(R.id.streamDelayTapButton);
         mStreamDelayTapButton.setOnClickListener(mDelayButtonsCL);
 
+        mStreamList = mRootView.findViewById(R.id.streamListRcv);
+        mStreamList.setLayoutManager(new LinearLayoutManager(mCtx));
+        mStreamList.setAdapter(new MusicListAdapter(mCtx, getDummyItemList(), this));
+        mStreamList.setHasFixedSize(true);
+
         mLoadPlayThread.start();
+    }
+
+    List<MusicListItem> getDummyItemList() {
+        List<MusicListItem> list = new ArrayList<>();
+        try {
+            list.add(new MusicListItem("BvB", new URL("https://bvb-live.cast.addradio.de/bvb/live/mp3/high")));
+            list.add(new MusicListItem("Rock", new URL("http://us4.internet-radio.com:8258/")));
+        } catch (Exception e) {
+            Log.d(MainActivity.TAG, e.getMessage());
+        }
+        return list;
     }
 
     Thread mLoadPlayThread = new Thread() {
@@ -148,9 +115,8 @@ public class StreamPlayer {
                         // "https://wpr-ice.streamguys1.com/wpr-ideas-mp3-64"
                         HttpMediaSource httpSource = null;
                         try {
-                            httpSource = new HttpMediaSource(Uri.encode(mUrl, ALLOWED_URI_CHARS));
+                            httpSource = new HttpMediaSource(mUrl);
                         } catch (Exception e) {
-                            mStreamStartStopButton.setText("Not available, retrying...");
                             Log.d(MainActivity.TAG,e.getMessage());
                             Thread.sleep(1000);
                             continue;
@@ -159,13 +125,12 @@ public class StreamPlayer {
                             mPlayer = new AudioPlayer(mCtx, httpSource);
                             mPlayer.play();
                         } catch (Exception e) {
-                            mStreamStartStopButton.setText("Couldn't play stream, retrying...");
                             Log.d(MainActivity.TAG,e.getMessage());
                             Thread.sleep(1000);
                             continue;
                         }
+                        mDelayCircleView.setAudioPlayer(mPlayer);
                         while(mPlay && httpSource.ok() && mPlayer.ok()) {
-                            mStreamStartStopButton.setText("Playing");
                             Thread.sleep(1000);
                         }
                         if (!mPlay) {
@@ -176,7 +141,6 @@ public class StreamPlayer {
                     }
                 } catch (Exception e) {
                     Log.d(MainActivity.TAG,e.getMessage());
-                    mStreamStartStopButton.setText("Unexpected failure, retrying...");
                 }
             }
         }
@@ -186,8 +150,7 @@ public class StreamPlayer {
         mCurrentDelay = seconds;
         mCurrentDelay = Math.max(0.0f, Math.min(AudioPlayer.MAX_DELAY_SECONDS, mCurrentDelay));
         mCurrentDelay = Math.round(2*mCurrentDelay)/2.0f; // Round to 0.5 seconds increments
-        mStreamDelaySecondsTV.setText(Float.toString(mCurrentDelay)+" s");
-        mStreamDelaySeekBar.setProgress(seekBarSecondsToProgress(mCurrentDelay));
+        //mStreamDelaySecondsTV.setText(Float.toString(mCurrentDelay)+" s");
         if (mPlayer != null) mPlayer.setDelay(mCurrentDelay);
     }
 

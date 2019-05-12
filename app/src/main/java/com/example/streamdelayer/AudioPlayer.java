@@ -19,16 +19,17 @@ import java.nio.ByteBuffer;
 
 public class AudioPlayer {
 
-    Context context = null;
-    MediaCodec mDecoder = null;
-    MediaExtractor mExtractor = null;
-    HttpMediaSource mMediaSource = null;
-    MediaFormat mFormat = null;
-    RingBuffer mRingBuffer = null;
+    private Context context = null;
+    private MediaCodec mDecoder = null;
+    private MediaExtractor mExtractor = null;
+    private HttpMediaSource mMediaSource = null;
+    private MediaFormat mFormat = null;
+    private RingBuffer mRingBuffer = null;
 
     public static float MAX_DELAY_SECONDS  = 60.0f;
-    boolean mOk = false;
-    boolean mPlay = false;
+    private boolean mOk = false;
+    private boolean mPlay = false;
+    private float mCurrentDelay = 0.0f;
 
     public AudioPlayer(final Context ctx, final HttpMediaSource mediaSource) throws Exception {
         context = ctx;
@@ -53,16 +54,22 @@ public class AudioPlayer {
         mPlay = true;
     }
 
+    public float getHeadPercentage() {return mRingBuffer.getHeadPercentage();}
+    public float getTailPercentage() {return mRingBuffer.getTailPercentage();}
+
     public void stop() {mPlay = false;}
 
     public boolean ok() {return mOk;}
 
     public void setDelay(float delay) {
+        mCurrentDelay = delay;
         long delayInSamples = (long)(delay*mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
         long delayInBytes = (long)(2*delayInSamples*mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
         Log.d(MainActivity.TAG, "Setting delay to "+Float.toString(delay)+" seconds, "+Long.toString(delayInBytes)+" bytes");
         mRingBuffer.setHeadOffset(delayInBytes);
     }
+
+    public float getDelay() {return mCurrentDelay;}
 
     public void play(){
         new Thread()

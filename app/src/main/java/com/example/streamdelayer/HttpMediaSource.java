@@ -1,6 +1,7 @@
 package com.example.streamdelayer;
 
 import android.media.MediaDataSource;
+import android.net.Uri;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -15,8 +16,8 @@ public class HttpMediaSource extends MediaDataSource {
     HttpURLConnection mUrlConnection = null;
     boolean mOk = false;
 
-    public HttpMediaSource(String url) throws Exception {
-        mUrlConnection = (HttpURLConnection) (new URL(url)).openConnection();
+    public HttpMediaSource(URL url) throws Exception {
+        mUrlConnection = (HttpURLConnection)url.openConnection();
         Log.d(MainActivity.TAG, "Connection established");
         mStream = new BufferedInputStream(mUrlConnection.getInputStream());
         Log.d(MainActivity.TAG, "Got input stream");

@@ -7,4 +7,5 @@
     <color name="l2Whiten">#20FFFFFF</color>
     <color name="l3Whiten">#40FFFFFF</color>
     <color name="materialDark">#121212</color>
+    <color name="ringAudio">#880000</color>
 </resources>

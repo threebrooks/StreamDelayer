@@ -2,14 +2,33 @@
 <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:id="@+id/card_view"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     card_view:cardUseCompatPadding="true">
 
-        <TextView
-            android:id="@+id/SongName"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="5dp"/>
+            android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/streamName"
+                    android:layout_width="0dip"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:padding="5dp"
+                    android:ellipsize="end"
+                    android:singleLine="true"/>
+
+        <TextView
+            android:id="@+id/streamURL"
+            android:layout_width="0dip"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
+            android:padding="5dp"
+            android:ellipsize="end"
+            android:singleLine="true"/>
+
+        </LinearLayout>
 
 </android.support.v7.widget.CardView>

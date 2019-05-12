@@ -1,35 +1,35 @@
 package com.example.streamdelayer;
 
-import android.net.Uri;
+import java.net.URL;
 
 public class MusicListItem
 {
-    private String mSongName;
-    private Uri mUri;
+    private String mStreamName;
+    private URL mUrl;
 
-    public MusicListItem(String name, Uri uri)
+    public MusicListItem(String name, URL url)
     {
-        mSongName = name;
-        mUri = uri;
+        mStreamName = name;
+        mUrl = url;
     }
 
     public String getName()
     {
-        return mSongName;
+        return mStreamName;
     }
 
     public void setName(String name)
     {
-        mSongName = name;
+        mStreamName = name;
     }
 
-    public Uri getUrl()
+    public URL getUrl()
     {
-        return mUri;
+        return mUrl;
     }
 
-    public void setUri(Uri uri)
+    public void setUri(URL url)
     {
-        mUri = uri;
+        mUrl = url;
     }
 }

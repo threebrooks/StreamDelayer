@@ -29,7 +29,6 @@ public class MainActivity extends AppCompatActivity {
 
     Context mCtx = null;
     StreamPlayer mStreamPlayer = null;
-    MusicPlayer mMusicPlayer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,9 +48,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        mStreamPlayer = new StreamPlayer(this, findViewById(R.id.streamPlayerLL));
-        mMusicPlayer = new MusicPlayer(this, findViewById(R.id.musicPlayerLL));
-
+        mStreamPlayer = new StreamPlayer(this, findViewById(R.id.topLevelCL));
     }
 
     @Override
@@ -74,14 +71,5 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch(requestCode) {
-            case MusicPlayer.MUSIC_FOLDER_INTENT:
-                mMusicPlayer.setMusicFolder(data.getData());
-                break;
-        }
     }
 }
