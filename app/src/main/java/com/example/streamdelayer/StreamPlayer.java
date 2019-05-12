@@ -94,15 +94,17 @@ public class StreamPlayer {
 
             LayoutInflater inflater = (LayoutInflater) mCtx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.playlist_edit_popup, null);
-            EditText nameET = ll.findViewById(R.id.playlistItemEditName);
+            final EditText nameET = ll.findViewById(R.id.playlistItemEditName);
             nameET.setText(playlistEntry.mName);
-            EditText urlET = ll.findViewById(R.id.playlistItemEditURL);
+            final EditText urlET = ll.findViewById(R.id.playlistItemEditURL);
             urlET.setText(playlistEntry.mUrl);
             alert.setView(ll);
 
             alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
                     try {
+                        playlistEntry.mUrl = urlET.getText().toString();
+                        playlistEntry.mName = nameET.getText().toString();
                         int newPos = mStreamListDB.setItem(playlistEntry, pos);
                         mStreamList.getAdapter().notifyDataSetChanged();
                     } catch (Exception e) {
