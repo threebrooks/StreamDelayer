@@ -3,21 +3,23 @@ package com.example.streamdelayer;
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.net.URL;
 import java.util.List;
 
 public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
 {
-    private List<MusicListItem> mItemList;
+    private StreamListDatabase mDB;
     private Context mCtx;
     private StreamPlayer mStreamPlayer;
 
-    public MusicListAdapter(Context ctx, List<MusicListItem> itemList, StreamPlayer streamPlayer)
+    public MusicListAdapter(Context ctx, StreamListDatabase db, StreamPlayer streamPlayer)
     {
-        mItemList = itemList;
+        mDB = db;
         mCtx = ctx;
         mStreamPlayer = streamPlayer;
     }
@@ -28,25 +30,42 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
         View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.music_player_item, null, false);
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         layoutView.setLayoutParams(lp);
-        layoutView.setBackgroundColor(ContextCompat.getColor(mCtx,R.color.l2Whiten));
         MusicListItemHolder rcv = new MusicListItemHolder(layoutView, this);
         return rcv;
     }
 
     @Override
-    public void onBindViewHolder(MusicListItemHolder holder, int position)
+    public void onBindViewHolder(MusicListItemHolder holder, final int position)
     {
-        holder.streamUrlET.setText(mItemList.get(position).getUrl().toString());
-        holder.streamNameET.setText(mItemList.get(position).getName());
+        try {
+            StreamListDatabase.StreamListItem item = mDB.getItem(position);
+            holder.mMainLL.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    mStreamPlayer.EditPlaylistEntry(position);
+                    return true;
+                }
+            });
+            holder.streamUrlET.setText(item.mUrl);
+            holder.streamNameET.setText(item.mName);
+            holder.mAdapterPosition = position;
+        } catch (Exception e) {
+            Log.d(MainActivity.TAG, e.getMessage());
+        }
     }
 
     @Override
     public int getItemCount()
     {
-        return mItemList.size();
+        return mDB.getItemCount();
     }
 
     public void playItem(int pos) {
-        mStreamPlayer.playStream(mItemList.get(pos).getUrl());
+        try {
+            URL url = new URL(mDB.getItem(pos).mUrl);
+            mStreamPlayer.playStream(url);
+        } catch (Exception e) {
+            Log.d(MainActivity.TAG, e.getMessage());
+        }
     }
 }

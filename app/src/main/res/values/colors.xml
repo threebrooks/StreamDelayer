@@ -8,4 +8,6 @@
     <color name="l3Whiten">#40FFFFFF</color>
     <color name="materialDark">#121212</color>
     <color name="ringAudio">#880000</color>
+    <color name="purple200">#BB86FC</color>
+    <color name="purple700">#3700B3</color>
 </resources>

@@ -1,6 +1,9 @@
 package com.example.streamdelayer;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.media.Image;
 import android.net.Uri;
 import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.AppCompatImageButton;
@@ -9,8 +12,11 @@ import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -33,12 +39,19 @@ public class StreamPlayer {
     AppCompatButton mStreamDelayTapButton = null;
     DelayCircleView mDelayCircleView = null;
 
+    ImageButton mPlaylistStartButton = null;
+    ImageButton mPlaylistPauseButton = null;
+    ImageButton mPlaylistAddItemButton = null;
+
+    StreamListDatabase mStreamListDB = null;
+
     RecyclerView mStreamList = null;
 
     float mCurrentDelay = 0.0f;
     boolean mPlay = false;
     URL mUrl = null;
     long mStreamDelayTapMillisStart = 0;
+    private String mStatus = "";
 
     public void playStream(URL url) {
         mUrl = url;
@@ -70,11 +83,72 @@ public class StreamPlayer {
         }
     };
 
+    public void EditPlaylistEntry(final int pos) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(mCtx);
+
+        alert.setTitle("Edit stream list item");
+
+        try {
+
+            final StreamListDatabase.StreamListItem playlistEntry = mStreamListDB.getItem(pos);
+
+            LayoutInflater inflater = (LayoutInflater) mCtx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.playlist_edit_popup, null);
+            EditText nameET = ll.findViewById(R.id.playlistItemEditName);
+            nameET.setText(playlistEntry.mName);
+            EditText urlET = ll.findViewById(R.id.playlistItemEditURL);
+            urlET.setText(playlistEntry.mUrl);
+            alert.setView(ll);
+
+            alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+                    try {
+                        int newPos = mStreamListDB.setItem(playlistEntry, pos);
+                        mStreamList.getAdapter().notifyDataSetChanged();
+                    } catch (Exception e) {
+                        Log.d(MainActivity.TAG, e.getMessage());
+                    }
+                }
+            });
+
+            alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+                }
+            });
+
+            alert.show();
+        } catch (Exception e) {
+            Log.d(MainActivity.TAG, e.getMessage());
+        }
+    }
+
+    public String getStatus() {return mStatus;}
+
+    View.OnClickListener mPlaylistButtonsCL = new  View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (v == mPlaylistStartButton) {
+                mPlay = true;
+            } else if (v == mPlaylistPauseButton) {
+                mPlay = false;
+            } else if (v == mPlaylistAddItemButton) {
+                try {
+                    EditPlaylistEntry(-1);
+                } catch (Exception e) {
+                    Log.d(MainActivity.TAG, e.getMessage());
+                }
+            }
+        }
+    };
+
     public StreamPlayer(Context ctx, View rootView) {
         mCtx = ctx;
         mRootView = rootView;
 
+        mStreamListDB = new StreamListDatabase(mCtx);
+
         mDelayCircleView = mRootView.findViewById(R.id.delayCircleView);
+        mDelayCircleView.setStreamPlayer(this);
 
         mStreamDelayMinus5Button = mRootView.findViewById(R.id.streamDelayMinus5Button);
         mStreamDelayMinus5Button.setOnClickListener(mDelayButtonsCL);
@@ -89,21 +163,17 @@ public class StreamPlayer {
 
         mStreamList = mRootView.findViewById(R.id.streamListRcv);
         mStreamList.setLayoutManager(new LinearLayoutManager(mCtx));
-        mStreamList.setAdapter(new MusicListAdapter(mCtx, getDummyItemList(), this));
-        mStreamList.setHasFixedSize(true);
+        mStreamList.setAdapter(new MusicListAdapter(mCtx, mStreamListDB, this));
+        //mStreamList.setHasFixedSize(true);
+
+        mPlaylistStartButton = mRootView.findViewById(R.id.playlistStartButton);
+        mPlaylistStartButton.setOnClickListener(mPlaylistButtonsCL);
+        mPlaylistPauseButton = mRootView.findViewById(R.id.playlistPauseButton);
+        mPlaylistPauseButton.setOnClickListener(mPlaylistButtonsCL);
+        mPlaylistAddItemButton = mRootView.findViewById(R.id.playlistAddItemButton);
+        mPlaylistAddItemButton.setOnClickListener(mPlaylistButtonsCL);
 
         mLoadPlayThread.start();
-    }
-
-    List<MusicListItem> getDummyItemList() {
-        List<MusicListItem> list = new ArrayList<>();
-        try {
-            list.add(new MusicListItem("BvB", new URL("https://bvb-live.cast.addradio.de/bvb/live/mp3/high")));
-            list.add(new MusicListItem("Rock", new URL("http://us4.internet-radio.com:8258/")));
-        } catch (Exception e) {
-            Log.d(MainActivity.TAG, e.getMessage());
-        }
-        return list;
     }
 
     Thread mLoadPlayThread = new Thread() {
@@ -111,29 +181,32 @@ public class StreamPlayer {
             while(true) {
                 try {
                     if (mPlay) {
-                        // https://bvb-live.cast.addradio.de/bvb/live/mp3/high
-                        // "https://wpr-ice.streamguys1.com/wpr-ideas-mp3-64"
                         HttpMediaSource httpSource = null;
                         try {
                             httpSource = new HttpMediaSource(mUrl);
                         } catch (Exception e) {
+                            mStatus = "Connecting...";
                             Log.d(MainActivity.TAG,e.getMessage());
                             Thread.sleep(1000);
                             continue;
                         }
                         try {
                             mPlayer = new AudioPlayer(mCtx, httpSource);
+                            mPlayer.setDelay(mCurrentDelay);
                             mPlayer.play();
                         } catch (Exception e) {
+                            mStatus = "Error, retrying...";
                             Log.d(MainActivity.TAG,e.getMessage());
                             Thread.sleep(1000);
                             continue;
                         }
                         mDelayCircleView.setAudioPlayer(mPlayer);
                         while(mPlay && httpSource.ok() && mPlayer.ok()) {
+                            mStatus = "Playing";
                             Thread.sleep(1000);
                         }
                         if (!mPlay) {
+                            mStatus = "Paused";
                             mPlayer.stop();
                         }
                     } else {

@@ -24,7 +24,8 @@
         android:orientation="horizontal"
         android:gravity="center"
         android:layout_marginLeft="@dimen/button_row_gap"
-        android:layout_marginRight="@dimen/button_row_gap">
+        android:layout_marginRight="@dimen/button_row_gap"
+        style="?android:attr/buttonBarStyle">
 
         <Button
             android:id="@+id/streamDelayMinus5Button"
@@ -33,7 +34,8 @@
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
             android:text="-5"
-            android:background="@drawable/button_left"/>
+            android:background="@drawable/button_left"
+            style="?android:attr/buttonBarButtonStyle"/>
         <Button
             android:id="@+id/streamDelayMinusPoint5Button"
             android:layout_width="0dip"
@@ -41,7 +43,8 @@
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
             android:text="-0.5"
-            android:background="@drawable/button_center"/>
+            android:background="@drawable/button_center"
+            style="?android:attr/buttonBarButtonStyle"/>
         <Button
             android:id="@+id/streamDelayPlusPoint5Button"
             android:layout_width="0dip"
@@ -49,7 +52,8 @@
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
             android:text="+0.5"
-            android:background="@drawable/button_center"/>
+            android:background="@drawable/button_center"
+            style="?android:attr/buttonBarButtonStyle"/>
         <Button
             android:id="@+id/streamDelayPlus5Button"
             android:layout_width="0dip"
@@ -57,7 +61,8 @@
             android:gravity="center_vertical|center_horizontal"
             android:layout_weight="1"
             android:text="+5"
-            android:background="@drawable/button_center"/>
+            android:background="@drawable/button_center"
+            style="?android:attr/buttonBarButtonStyle"/>
         <Button
             android:id="@+id/streamDelayTapButton"
             android:layout_width="0dip"
@@ -65,7 +70,8 @@
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
             android:text="TAP"
-            android:background="@drawable/button_right" />
+            android:background="@drawable/button_right"
+            style="?android:attr/buttonBarButtonStyle"/>
     </LinearLayout>
 
     <android.support.v4.widget.Space

@@ -7,7 +7,62 @@
     android:orientation="vertical">
 
     <android.support.v7.widget.RecyclerView
+        android:id="@+id/streamListRcv"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/streamListRcv"/>
+        android:layout_height="0dip"
+        android:layout_marginLeft="@dimen/button_row_gap"
+        android:layout_marginRight="@dimen/button_row_gap"
+        android:layout_weight="7"
+        android:background="@drawable/playlist" />
+
+    <android.support.v4.widget.Space
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/button_row_gap" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginLeft="@dimen/button_row_gap"
+        android:layout_marginRight="@dimen/button_row_gap"
+        style="?android:attr/buttonBarStyle">
+
+        <ImageButton
+            android:id="@+id/playlistStartButton"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center_horizontal"
+            android:background="@drawable/button_left"
+            android:src="@drawable/ic_baseline_play_arrow_24px"
+            android:tint="@color/fontPrimary"
+            style="?android:attr/buttonBarButtonStyle"/>
+        <ImageButton
+            android:id="@+id/playlistPauseButton"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center_horizontal"
+            android:background="@drawable/button_center"
+            android:src="@drawable/ic_baseline_pause_24px"
+            android:tint="@color/fontPrimary"
+            style="?android:attr/buttonBarButtonStyle"/>
+        <ImageButton
+            android:id="@+id/playlistAddItemButton"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center_horizontal"
+            android:background="@drawable/button_right"
+            android:src="@drawable/ic_outline_playlist_add_24px"
+            android:tint="@color/fontPrimary"
+            style="?android:attr/buttonBarButtonStyle"/>
+    </LinearLayout>
+
+    <android.support.v4.widget.Space
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/button_row_gap" />
+
 </LinearLayout>

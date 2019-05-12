@@ -50,6 +50,7 @@ public class AudioPlayer {
                         mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)),
                 null, null, 0);
         mRingBuffer = new RingBuffer((int)(MAX_DELAY_SECONDS*mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE))*mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)*2, 0);
+
         mOk = true;
         mPlay = true;
     }

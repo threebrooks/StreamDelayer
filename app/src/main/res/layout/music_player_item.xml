@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:id="@+id/card_view"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    card_view:cardUseCompatPadding="true">
+    android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -16,18 +14,24 @@
                     android:layout_width="0dip"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
+                    android:gravity="center_vertical"
                     android:padding="5dp"
+                    android:textSize="30sp"
                     android:ellipsize="end"
-                    android:singleLine="true"/>
+                    android:singleLine="true"
+                    android:textColor="@color/purple200"
+                    android:background="@color/l2Whiten"/>
 
         <TextView
             android:id="@+id/streamURL"
             android:layout_width="0dip"
             android:layout_height="match_parent"
             android:layout_weight="2"
+            android:gravity="center_vertical"
             android:padding="5dp"
             android:ellipsize="end"
-            android:singleLine="true"/>
+            android:singleLine="true"
+            android:background="@color/l2Whiten"/>
 
         </LinearLayout>
 
