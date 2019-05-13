@@ -34,7 +34,7 @@ public class RingBuffer {
         return wrapped(tail)/(float)buffer.length;
     }
 
-    synchronized public void add(byte[] toAdd, int size) {
+    synchronized public void add(byte[] toAdd, int size) throws Exception {
         //Log.d(MainActivity.TAG, "add(): head:"+head+" ,tail:"+tail+", dist="+(head-tail));
         if ((wrapped(head)+size) > buffer.length) {
             long firstHalf = buffer.length-wrapped(head);
@@ -45,10 +45,10 @@ public class RingBuffer {
             System.arraycopy(toAdd, 0, buffer, (int)wrapped(head), size);
         }
         head += size;
-        if ((head-tail) >= buffer.length) throw new BufferOverflowException();
+        if ((head-tail) >= buffer.length) throw new Exception("Buffer overflow");
     }
 
-    synchronized public void get(byte[] toGet, int size) {
+    synchronized public void get(byte[] toGet, int size) throws Exception {
         //Log.d(MainActivity.TAG, "get(): head:"+head+" ,tail:"+tail+", dist="+(head-tail));
         if ((wrapped(tail)+size) > buffer.length) {
             long firstHalf = buffer.length-wrapped(tail);
@@ -59,7 +59,7 @@ public class RingBuffer {
             System.arraycopy(buffer, (int)wrapped(tail), toGet, 0, size);
         }
         tail += size;
-        if (tail > head) throw new BufferUnderflowException();
+        if (tail > head) throw new Exception("Buffer underflow");
     }
 
     public String toString() {

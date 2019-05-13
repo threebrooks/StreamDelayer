@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.support.design.widget.FloatingActionButton;
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     Context mCtx = null;
     StreamPlayer mStreamPlayer = null;
     PowerManager.WakeLock mWakelock = null;
+    WifiManager.WifiLock mWifilock = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,9 +54,12 @@ public class MainActivity extends AppCompatActivity {
 
         mStreamPlayer = new StreamPlayer(this, findViewById(R.id.topLevelCL));
 
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        PowerManager pm = (PowerManager)getApplicationContext().getSystemService(Context.POWER_SERVICE);
         mWakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MainActivity.TAG);
         mWakelock.acquire();
+        WifiManager wm = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        mWifilock = wm.createWifiLock(MainActivity.TAG);
+        mWifilock.acquire();
     }
 
     @Override
