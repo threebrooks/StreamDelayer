@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.media.Image;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
+import android.os.PowerManager;
 import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.LinearLayoutManager;
@@ -46,6 +48,9 @@ public class StreamPlayer {
     StreamListDatabase mStreamListDB = null;
 
     RecyclerView mStreamList = null;
+
+    PowerManager.WakeLock mWakelock = null;
+    WifiManager.WifiLock mWifilock = null;
 
     float mCurrentDelay = 0.0f;
     boolean mPlay = false;
@@ -175,6 +180,11 @@ public class StreamPlayer {
         mPlaylistAddItemButton = mRootView.findViewById(R.id.playlistAddItemButton);
         mPlaylistAddItemButton.setOnClickListener(mPlaylistButtonsCL);
 
+        PowerManager pm = (PowerManager)mCtx.getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        mWakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MainActivity.TAG);
+        WifiManager wm = (WifiManager)mCtx.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        mWifilock = wm.createWifiLock(MainActivity.TAG);
+
         mLoadPlayThread.start();
     }
 
@@ -203,6 +213,8 @@ public class StreamPlayer {
                             continue;
                         }
                         mDelayCircleView.setAudioPlayer(mPlayer);
+                        mWakelock.acquire();
+                        mWifilock.acquire();
                         while(mPlay && httpSource.ok() && mPlayer.ok()) {
                             mStatus = "Playing";
                             Thread.sleep(1000);
@@ -210,11 +222,15 @@ public class StreamPlayer {
                         if (!mPlay) {
                             mStatus = "Paused";
                             mPlayer.stop();
+                            mWakelock.release();
+                            mWifilock.release();
                         }
                     } else {
                         Thread.sleep(1000);
                     }
                 } catch (Exception e) {
+                    mWakelock.release();
+                    mWifilock.release();
                     Log.d(MainActivity.TAG,e.getMessage());
                 }
             }
