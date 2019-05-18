@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_baseline_play_arrow_24px"
+        android:id="@+id/notification_big_play"
+        style="@style/TextAppearance.Compat.Notification.Title" />
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_baseline_pause_24px"
+        android:id="@+id/notification_big_pause"
+        style="@style/TextAppearance.Compat.Notification.Title" />
+</LinearLayout>

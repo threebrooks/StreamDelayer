@@ -63,6 +63,7 @@ public class AudioPlayer {
     public boolean ok() {return mOk;}
 
     public void setDelay(float delay) {
+        delay = Math.max(0.0f, Math.min(MAX_DELAY_SECONDS, delay));
         mCurrentDelay = delay;
         long delayInSamples = (long)(delay*mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
         long delayInBytes = (long)(2*delayInSamples*mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));

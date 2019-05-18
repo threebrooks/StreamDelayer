@@ -3,6 +3,7 @@ package com.example.streamdelayer;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.media.Image;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
@@ -27,9 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StreamPlayer {
-
-    AudioPlayer mPlayer = null;
-    private static final String ALLOWED_URI_CHARS = "@#&=*+-_.,:!?()/~'%";
+    long mStreamDelayTapMillisStart = 0;
 
     View mRootView = null;
     Context mCtx = null;
@@ -49,35 +48,28 @@ public class StreamPlayer {
 
     RecyclerView mStreamList = null;
 
-    PowerManager.WakeLock mWakelock = null;
-    WifiManager.WifiLock mWifilock = null;
-
-    float mCurrentDelay = 0.0f;
-    boolean mPlay = false;
-    URL mUrl = null;
-    long mStreamDelayTapMillisStart = 0;
-    private String mStatus = "";
-
-    public void playStream(URL url) {
-        mUrl = url;
-        mPlay = !mPlay;
-    }
-
     View.OnClickListener mDelayButtonsCL = new  View.OnClickListener() {
         @Override
         public void onClick(View v) {
+            Intent delayIntent = new Intent(mCtx, PlayerService.class);
+            delayIntent.setAction(PlayerService.ACTION_DELAY);
             if (v == mStreamDelayMinus5Button) {
-                setDelay(mCurrentDelay-5f);
+                delayIntent.putExtra("delta", -5.0f);
+                mCtx.startService(delayIntent);
             } else if (v == mStreamDelayMinusPoint5Button) {
-                setDelay(mCurrentDelay-.5f);
+                delayIntent.putExtra("delta", -0.5f);
+                mCtx.startService(delayIntent);
             }else if (v == mStreamDelayPlusPoint5Button) {
-                setDelay(mCurrentDelay+.5f);
+                delayIntent.putExtra("delta", +0.5f);
+                mCtx.startService(delayIntent);
             } else if (v == mStreamDelayPlus5Button) {
-                setDelay(mCurrentDelay+5f);
+                delayIntent.putExtra("delta", +5.0f);
+                mCtx.startService(delayIntent);
             } else if (v == mStreamDelayTapButton) {
                 if (mStreamDelayTapMillisStart != 0) {
                     float secondsElapsed = (System.currentTimeMillis()-mStreamDelayTapMillisStart)/1000.0f;
-                    setDelay(secondsElapsed);
+                    delayIntent.putExtra("absolute", secondsElapsed);
+                    mCtx.startService(delayIntent);
                     mStreamDelayTapMillisStart = 0;
                     mStreamDelayTapButton.setText("TAP");
                 } else {
@@ -129,15 +121,17 @@ public class StreamPlayer {
         }
     }
 
-    public String getStatus() {return mStatus;}
-
     View.OnClickListener mPlaylistButtonsCL = new  View.OnClickListener() {
         @Override
         public void onClick(View v) {
             if (v == mPlaylistStartButton) {
-                mPlay = true;
+                Intent startIntent = new Intent(mCtx, PlayerService.class);
+                startIntent.setAction(PlayerService.ACTION_PLAY);
+                mCtx.startService(startIntent);
             } else if (v == mPlaylistPauseButton) {
-                mPlay = false;
+                Intent startIntent = new Intent(mCtx, PlayerService.class);
+                startIntent.setAction(PlayerService.ACTION_PAUSE);
+                mCtx.startService(startIntent);
             } else if (v == mPlaylistAddItemButton) {
                 try {
                     EditPlaylistEntry(-1);
@@ -155,7 +149,6 @@ public class StreamPlayer {
         mStreamListDB = new StreamListDatabase(mCtx);
 
         mDelayCircleView = mRootView.findViewById(R.id.delayCircleView);
-        mDelayCircleView.setStreamPlayer(this);
 
         mStreamDelayMinus5Button = mRootView.findViewById(R.id.streamDelayMinus5Button);
         mStreamDelayMinus5Button.setOnClickListener(mDelayButtonsCL);
@@ -179,70 +172,6 @@ public class StreamPlayer {
         mPlaylistPauseButton.setOnClickListener(mPlaylistButtonsCL);
         mPlaylistAddItemButton = mRootView.findViewById(R.id.playlistAddItemButton);
         mPlaylistAddItemButton.setOnClickListener(mPlaylistButtonsCL);
-
-        PowerManager pm = (PowerManager)mCtx.getApplicationContext().getSystemService(Context.POWER_SERVICE);
-        mWakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MainActivity.TAG);
-        WifiManager wm = (WifiManager)mCtx.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        mWifilock = wm.createWifiLock(MainActivity.TAG);
-
-        mLoadPlayThread.start();
-    }
-
-    Thread mLoadPlayThread = new Thread() {
-        public void run() {
-            while(true) {
-                try {
-                    if (mPlay) {
-                        HttpMediaSource httpSource = null;
-                        try {
-                            httpSource = new HttpMediaSource(mUrl);
-                        } catch (Exception e) {
-                            mStatus = "Connecting...";
-                            Log.d(MainActivity.TAG,e.getMessage());
-                            Thread.sleep(1000);
-                            continue;
-                        }
-                        try {
-                            mPlayer = new AudioPlayer(mCtx, httpSource);
-                            mPlayer.setDelay(mCurrentDelay);
-                            mPlayer.play();
-                        } catch (Exception e) {
-                            mStatus = "Error, retrying...";
-                            Log.d(MainActivity.TAG,e.getMessage());
-                            Thread.sleep(1000);
-                            continue;
-                        }
-                        mDelayCircleView.setAudioPlayer(mPlayer);
-                        mWakelock.acquire();
-                        mWifilock.acquire();
-                        while(mPlay && httpSource.ok() && mPlayer.ok()) {
-                            mStatus = "Playing";
-                            Thread.sleep(1000);
-                        }
-                        if (!mPlay) {
-                            mStatus = "Paused";
-                            mPlayer.stop();
-                            mWakelock.release();
-                            mWifilock.release();
-                        }
-                    } else {
-                        Thread.sleep(1000);
-                    }
-                } catch (Exception e) {
-                    mWakelock.release();
-                    mWifilock.release();
-                    Log.d(MainActivity.TAG,e.getMessage());
-                }
-            }
-        }
-    };
-
-    private void setDelay(float seconds) {
-        mCurrentDelay = seconds;
-        mCurrentDelay = Math.max(0.0f, Math.min(AudioPlayer.MAX_DELAY_SECONDS, mCurrentDelay));
-        mCurrentDelay = Math.round(2*mCurrentDelay)/2.0f; // Round to 0.5 seconds increments
-        //mStreamDelaySecondsTV.setText(Float.toString(mCurrentDelay)+" s");
-        if (mPlayer != null) mPlayer.setDelay(mCurrentDelay);
     }
 
 }

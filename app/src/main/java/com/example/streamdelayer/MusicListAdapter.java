@@ -1,6 +1,7 @@
 package com.example.streamdelayer;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -63,7 +64,10 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
     public void playItem(int pos) {
         try {
             URL url = new URL(mDB.getItem(pos).mUrl);
-            mStreamPlayer.playStream(url);
+            Intent startIntent = new Intent(mCtx, PlayerService.class);
+            startIntent.setAction(PlayerService.ACTION_PLAY);
+            startIntent.putExtra("url", url.toString());
+            mCtx.startService(startIntent);
         } catch (Exception e) {
             Log.d(MainActivity.TAG, e.getMessage());
         }

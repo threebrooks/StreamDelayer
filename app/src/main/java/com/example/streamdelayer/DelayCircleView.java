@@ -12,8 +12,7 @@ import android.view.View;
 public class DelayCircleView extends View {
 
     Context mCtx = null;
-    AudioPlayer mAudioPlayer = null;
-    StreamPlayer mStreamPlayer = null;
+    PlayerService mPlayerService = null;
 
     RectF mArcRect = null;
 
@@ -22,12 +21,8 @@ public class DelayCircleView extends View {
         mCtx = context;
     }
 
-    public void setAudioPlayer(AudioPlayer ap) {
-        mAudioPlayer = ap;
-    }
-
-    public void setStreamPlayer(StreamPlayer sp) {
-        mStreamPlayer = sp;
+    public void setPlayerService(PlayerService sp) {
+        mPlayerService = sp;
     }
 
     private final Rect textBounds = new Rect();
@@ -52,10 +47,11 @@ public class DelayCircleView extends View {
             mArcRect = new RectF(getWidth()/2.0f-radius, getHeight()/2.0f-radius, getWidth()/2.0f+radius, getHeight()/2.0f+radius);
         }
 
-        if (mAudioPlayer != null) {
+        AudioPlayer audioPlayer = mPlayerService.mPlayer;
+        if (audioPlayer != null) {
             p.setColor(ContextCompat.getColor(mCtx, R.color.purple700));
-            float headPerc = mAudioPlayer.getHeadPercentage();
-            float tailPerc = mAudioPlayer.getTailPercentage();
+            float headPerc = audioPlayer.getHeadPercentage();
+            float tailPerc = audioPlayer.getTailPercentage();
             float sweepPerc = Math.max(0.01f,(headPerc - tailPerc+1.0f) % 1.0f);
             canvas.drawArc(
                     mArcRect,
@@ -64,15 +60,15 @@ public class DelayCircleView extends View {
                     false,
                     p);
 
-            String delayText =  "Delay: "+mAudioPlayer.getDelay()+"s";
+            String delayText =  "Delay: "+audioPlayer.getDelay()+"s";
             p.setColor(ContextCompat.getColor(mCtx, R.color.fontPrimary));
             p.setTextSize(100.0f);
             p.setStyle(Paint.Style.FILL);
             drawTextCentered(canvas, p, delayText, getWidth()/2.0f, getHeight()/2.0f);
         }
 
-        if (mStreamPlayer != null) {
-            String statusText = mStreamPlayer.getStatus();
+        if (mPlayerService != null) {
+            String statusText = mPlayerService.getStatus();
             p.setColor(ContextCompat.getColor(mCtx, R.color.fontPrimary));
             p.setTextSize(50.0f);
             p.setStyle(Paint.Style.FILL);

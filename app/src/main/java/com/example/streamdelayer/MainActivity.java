@@ -1,12 +1,15 @@
 package com.example.streamdelayer;
 
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -27,10 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    public static String APP_NAME = "StreamDelayer";
     public static String TAG = "StreamDelayer";
 
     Context mCtx = null;
     StreamPlayer mStreamPlayer = null;
+    PlayerService mService = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +56,40 @@ public class MainActivity extends AppCompatActivity {
         }
 
         mStreamPlayer = new StreamPlayer(this, findViewById(R.id.topLevelCL));
+
+        Intent startIntent = new Intent(MainActivity.this, PlayerService.class);
+        startIntent.setAction(PlayerService.ACTION_START_PLAYER_SERVICE);
+        startService(startIntent);
+
+        /*
+        Intent stopIntent = new Intent(MainActivity.this, ForegroundService.class);
+                stopIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
+                startService(stopIntent);
+         */
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Bind to LocalService
+        Intent intent = new Intent(this, PlayerService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    }
+
+    private ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;
+            mService = binder.getService();
+            mStreamPlayer.mDelayCircleView.setPlayerService(mService);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
