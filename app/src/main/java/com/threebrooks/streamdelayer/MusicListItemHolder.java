@@ -1,4 +1,4 @@
-package com.example.streamdelayer;
+package com.threebrooks.streamdelayer;
 
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;

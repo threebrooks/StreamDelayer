@@ -1,4 +1,4 @@
-package com.example.streamdelayer;
+package com.threebrooks.streamdelayer;
 
 import android.Manifest;
 import android.content.ComponentName;

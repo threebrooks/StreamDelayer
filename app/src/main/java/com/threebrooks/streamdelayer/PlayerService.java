@@ -1,4 +1,4 @@
-package com.example.streamdelayer;
+package com.threebrooks.streamdelayer;
 
 import android.annotation.TargetApi;
 import android.app.Notification;
@@ -26,10 +26,10 @@ import java.net.URL;
 public class PlayerService extends Service {
     private static final String TAG = "PlayerService";
 
-    public static String ACTION_START = "com.example.streamdelayer.action.start";
-    public static String ACTION_MAIN = "com.example.streamdelayer.action.main";
-    public static String ACTION_STOP = "com.example.streamdelayer.action.stop";
-    public static String ACTION_DELAY = "com.example.streamdelayer.action.delay";
+    public static String ACTION_START = "com.threebrooks.streamdelayer.action.start";
+    public static String ACTION_MAIN = "com.threebrooks.streamdelayer.action.main";
+    public static String ACTION_STOP = "com.threebrooks.streamdelayer.action.stop";
+    public static String ACTION_DELAY = "com.threebrooks.streamdelayer.action.delay";
     public static String CHANNEL_ID = MainActivity.APP_NAME;
     public static int PLAYER_SERVICE = 101;
 
