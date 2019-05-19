@@ -71,7 +71,7 @@ public class AudioPlayer {
         mTargetDelay = Math.max(MIN_DELAY_SECONDS, Math.min(MAX_DELAY_SECONDS, delay));
         mTargetDelay = roundToFraction(mTargetDelay, DELAY_RESOLUTION);
         long delayInSamples = (long)(delay*mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
-        long delayInBytes = (long)(2*delayInSamples*mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
+        long delayInBytes = (2*delayInSamples*mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
         mRingBuffer.setHeadOffset(delayInBytes);
     }
 

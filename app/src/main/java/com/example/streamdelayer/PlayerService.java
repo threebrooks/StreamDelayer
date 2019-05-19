@@ -173,7 +173,7 @@ public class PlayerService extends Service {
                 }
             }
         }
-    };
+    }
 
     @NonNull
     @TargetApi(26)
