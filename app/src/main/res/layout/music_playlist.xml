@@ -30,23 +30,13 @@
         style="?android:attr/buttonBarStyle">
 
         <ImageButton
-            android:id="@+id/playlistStartButton"
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center_vertical|center_horizontal"
-            android:background="@drawable/button_left"
-            android:src="@drawable/ic_baseline_play_arrow_24px"
-            android:tint="@color/fontPrimary"
-            style="?android:attr/buttonBarButtonStyle"/>
-        <ImageButton
-            android:id="@+id/playlistPauseButton"
+            android:id="@+id/playlistStopButton"
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
             android:background="@drawable/button_center"
-            android:src="@drawable/ic_baseline_pause_24px"
+            android:src="@drawable/ic_baseline_stop_24px"
             android:tint="@color/fontPrimary"
             style="?android:attr/buttonBarButtonStyle"/>
         <ImageButton

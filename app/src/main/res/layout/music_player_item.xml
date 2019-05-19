@@ -21,7 +21,7 @@
                     android:singleLine="true"
                     android:textColor="@color/purple200"
                     android:background="@color/l2Whiten"/>
-
+<!--
         <TextView
             android:id="@+id/streamURL"
             android:layout_width="0dip"
@@ -31,7 +31,7 @@
             android:padding="5dp"
             android:ellipsize="end"
             android:singleLine="true"
-            android:background="@color/l2Whiten"/>
+            android:background="@color/l2Whiten"/> -->
 
         </LinearLayout>
 

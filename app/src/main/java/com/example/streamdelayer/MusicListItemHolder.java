@@ -10,7 +10,7 @@ import android.widget.TextView;
 public class MusicListItemHolder extends RecyclerView.ViewHolder implements View.OnClickListener
 {
     public TextView streamNameET;
-    public TextView streamUrlET;
+    //public TextView streamUrlET;
     View mMainLL;
     int mAdapterPosition = -1;
     MusicListAdapter mAdapter;
@@ -21,7 +21,7 @@ public class MusicListItemHolder extends RecyclerView.ViewHolder implements View
         itemView.setOnClickListener(this);
         mMainLL = itemView;
         streamNameET = itemView.findViewById(R.id.streamName);
-        streamUrlET = itemView.findViewById(R.id.streamURL);
+        //streamUrlET = itemView.findViewById(R.id.streamURL);
         mAdapter = adapter;
     }
 

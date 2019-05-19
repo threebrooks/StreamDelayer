@@ -47,7 +47,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
                     return true;
                 }
             });
-            holder.streamUrlET.setText(item.mUrl);
+            //holder.streamUrlET.setText(item.mUrl);
             holder.streamNameET.setText(item.mName);
             holder.mAdapterPosition = position;
         } catch (Exception e) {
@@ -65,8 +65,9 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
         try {
             URL url = new URL(mDB.getItem(pos).mUrl);
             Intent startIntent = new Intent(mCtx, PlayerService.class);
-            startIntent.setAction(PlayerService.ACTION_PLAY);
+            startIntent.setAction(PlayerService.ACTION_START);
             startIntent.putExtra("url", url.toString());
+            startIntent.putExtra("name", mDB.getItem(pos).mName);
             mCtx.startService(startIntent);
         } catch (Exception e) {
             Log.d(MainActivity.TAG, e.getMessage());

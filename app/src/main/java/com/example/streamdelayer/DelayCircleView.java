@@ -38,10 +38,10 @@ public class DelayCircleView extends View {
         float radius = 0.9f*Math.min(canvas.getWidth()/2, canvas.getHeight()/2);
 
         Paint p = new Paint();
-        p.setColor(ContextCompat.getColor(mCtx, R.color.purple200));
+        //p.setColor(ContextCompat.getColor(mCtx, R.color.purple200));
         p.setStyle(Paint.Style.STROKE);
         p.setStrokeWidth(radius/10.0f);
-        canvas.drawCircle(getWidth()/2.0f, getHeight()/2.0f, radius, p);
+        //canvas.drawCircle(getWidth()/2.0f, getHeight()/2.0f, radius, p);
 
         if (mArcRect == null) {
             mArcRect = new RectF(getWidth()/2.0f-radius, getHeight()/2.0f-radius, getWidth()/2.0f+radius, getHeight()/2.0f+radius);
@@ -49,7 +49,7 @@ public class DelayCircleView extends View {
 
         AudioPlayer audioPlayer = mPlayerService.mPlayer;
         if (audioPlayer != null) {
-            p.setColor(ContextCompat.getColor(mCtx, R.color.purple700));
+            p.setColor(ContextCompat.getColor(mCtx, R.color.purple200));
             float headPerc = audioPlayer.getHeadPercentage();
             float tailPerc = audioPlayer.getTailPercentage();
             float sweepPerc = Math.max(0.01f,(headPerc - tailPerc+1.0f) % 1.0f);
@@ -60,7 +60,8 @@ public class DelayCircleView extends View {
                     false,
                     p);
 
-            String delayText =  "Delay: "+audioPlayer.getDelay()+"s";
+            float drift = audioPlayer.getDrift();
+            String delayText =  "Delay: "+audioPlayer.getTargetDelay()+"s"+(drift >= 0.0f ? "+" : "")+String.format("%.1f", drift);
             p.setColor(ContextCompat.getColor(mCtx, R.color.fontPrimary));
             p.setTextSize(100.0f);
             p.setStyle(Paint.Style.FILL);

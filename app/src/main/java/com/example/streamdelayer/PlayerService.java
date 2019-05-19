@@ -26,11 +26,9 @@ import java.net.URL;
 public class PlayerService extends Service {
     private static final String TAG = "PlayerService";
 
-    public static String ACTION_START_PLAYER_SERVICE = "com.example.streamdelayer.action.start_player_service";
-    public static String ACTION_STOP_PLAYER_SERVICE = "com.example.streamdelayer.action.start_player_service";
+    public static String ACTION_START = "com.example.streamdelayer.action.start";
     public static String ACTION_MAIN = "com.example.streamdelayer.action.main";
-    public static String ACTION_PLAY = "com.example.streamdelayer.action.play";
-    public static String ACTION_PAUSE = "com.example.streamdelayer.action.pause";
+    public static String ACTION_STOP = "com.example.streamdelayer.action.stop";
     public static String ACTION_DELAY = "com.example.streamdelayer.action.delay";
     public static String CHANNEL_ID = MainActivity.APP_NAME;
     public static int PLAYER_SERVICE = 101;
@@ -45,6 +43,8 @@ public class PlayerService extends Service {
     PowerManager.WakeLock mWakelock = null;
     WifiManager.WifiLock mWifilock = null;
 
+    LoadPlayThread mLoadPlayThread = null;
+
     // Binder given to clients
     private final IBinder binder = new LocalBinder();
     public class LocalBinder extends Binder {
@@ -52,11 +52,6 @@ public class PlayerService extends Service {
             // Return this instance of LocalService so clients can call public methods
             return PlayerService.this;
         }
-    }
-
-    public void playStream(URL url) {
-        mUrl = url;
-        mPlay = !mPlay;
     }
 
     public String getStatus() {return mStatus;}
@@ -68,23 +63,13 @@ public class PlayerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getAction().equals(ACTION_START_PLAYER_SERVICE)) {
+        if (intent.getAction().equals(ACTION_START)) {
             Log.i(TAG, "Received Start Foreground Intent ");
 
             Intent notificationIntent = new Intent(this, MainActivity.class);
             notificationIntent.setAction(ACTION_MAIN);
             notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-
-            Intent playIntent = new Intent(this, PlayerService.class);
-            playIntent.setAction(ACTION_PLAY);
-            PendingIntent pPlayIntent = PendingIntent.getService(this, 0, playIntent, 0);
-
-            Intent pauseIntent = new Intent(this, PlayerService.class);
-            pauseIntent.setAction(ACTION_PAUSE);
-            PendingIntent pPauseIntent = PendingIntent.getService(this, 0, pauseIntent, 0);
-
-            //Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_baseline_play_arrow_24px);
 
             String channelId;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -93,93 +78,93 @@ public class PlayerService extends Service {
                 channelId = "";
             }
 
-            // Get the layouts to use in the custom notification
-            //RemoteViews notificationLayout = new RemoteViews(getPackageName(), R.layout.notification_small);
-            //RemoteViews notificationLayoutExpanded = new RemoteViews(getPackageName(), R.layout.notification_big);
+            String name = intent.getStringExtra("name");
+            String url = intent.getStringExtra("url");
 
-            Notification notification = new NotificationCompat.Builder(this, channelId)
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
                     .setContentTitle(MainActivity.APP_NAME)
-                    .setTicker(MainActivity.APP_NAME)
-                    //.setContentText(MainActivity.APP_NAME)
-                    .setSmallIcon(R.drawable.ic_baseline_folder_open_24px)
+                    .setContentText("Playing "+name)
+                    .setSmallIcon(R.drawable.ic_baseline_play_arrow_24px)
                     .setContentIntent(pendingIntent)
                     .setOngoing(true)
-                    .setStyle(new NotificationCompat.DecoratedCustomViewStyle()).build();
-                    //.setCustomContentView(notificationLayout)
-                    //.setCustomBigContentView(notificationLayoutExpanded).build();
-                    //.addAction(R.drawable.ic_baseline_play_arrow_24px,"Play", pPlayIntent)
-                    //.addAction(R.drawable.ic_baseline_pause_24px, "Pause", pPauseIntent).build();
-            startForeground(PLAYER_SERVICE, notification);
-            mLoadPlayThread.start();
+                    .setStyle(new NotificationCompat.DecoratedCustomViewStyle());
+
+            startForeground(PLAYER_SERVICE, builder.build());
 
             PowerManager pm = (PowerManager)getApplicationContext().getSystemService(Context.POWER_SERVICE);
             mWakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MainActivity.TAG);
             WifiManager wm = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             mWifilock = wm.createWifiLock(MainActivity.TAG);
 
-        } else if (intent.getAction().equals(ACTION_PLAY)) {
             try {
-                if (intent.hasExtra("url")) mUrl = new URL(intent.getStringExtra("url"));
+                mUrl = new URL(url);
+                mPlay = true;
             } catch (Exception e) {
                 mStatus = "Invalid URL";
             }
-            mPlay = true;
-        } else if (intent.getAction().equals(ACTION_PAUSE)) {
+
+            mLoadPlayThread = new LoadPlayThread();
+            mLoadPlayThread.start();
+        } else if (intent.getAction().equals(ACTION_STOP)) {
             mPlay = false;
+            try {
+                mLoadPlayThread.join();
+                mLoadPlayThread = null;
+            } catch (Exception e) {
+                Log.d(MainActivity.TAG, e.getMessage());
+            }
+            stopForeground(true);
+            stopSelf();
         } else if (intent.getAction().equals(ACTION_DELAY)) {
             if (intent.hasExtra("delta")) {
-                mPlayer.setDelay(mPlayer.getDelay()+ intent.getFloatExtra("delta", 0.0f));
+                mPlayer.setTargetDelay(mPlayer.getTargetDelay()+ intent.getFloatExtra("delta", 0.0f));
             }
             if (intent.hasExtra("absolute")) {
-                mPlayer.setDelay(intent.getFloatExtra("absolute", mPlayer.getDelay()));
+                mPlayer.setTargetDelay(intent.getFloatExtra("absolute", mPlayer.getTargetDelay()));
             }
-        } else if (intent.getAction().equals(ACTION_STOP_PLAYER_SERVICE)) {
+        } else if (intent.getAction().equals(ACTION_STOP)) {
             Log.i(TAG, "Received Stop Foreground Intent");
             stopForeground(true);
             stopSelf();
         }
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
 
-    Thread mLoadPlayThread = new Thread() {
+    class LoadPlayThread extends Thread {
         public void run() {
-            while(true) {
+            while(mPlay) {
                 try {
-                    if (mPlay) {
-                        HttpMediaSource httpSource = null;
-                        try {
-                            httpSource = new HttpMediaSource(mUrl);
-                        } catch (Exception e) {
-                            mStatus = "Connecting...";
-                            Log.d(MainActivity.TAG,e.getMessage());
-                            Thread.sleep(1000);
-                            continue;
-                        }
-                        try {
-                            mPlayer = new AudioPlayer(PlayerService.this, httpSource);
-                            mPlayer.setDelay(mCurrentDelay);
-                            mPlayer.play();
-                        } catch (Exception e) {
-                            mStatus = "Error, retrying...";
-                            Log.d(MainActivity.TAG,e.getMessage());
-                            Thread.sleep(1000);
-                            continue;
-                        }
-                        mWakelock.acquire();
-                        mWifilock.acquire();
-                        while(mPlay && httpSource.ok() && mPlayer.ok()) {
-                            mStatus = "Playing";
-                            Thread.sleep(1000);
-                        }
-                        if (!mPlay) {
-                            mStatus = "Paused";
-                            mPlayer.stop();
-                            mWakelock.release();
-                            mWifilock.release();
-                        }
-                    } else {
+                    HttpMediaSource httpSource = null;
+                    try {
+                        httpSource = new HttpMediaSource(mUrl);
+                    } catch (Exception e) {
+                        mStatus = "Connecting...";
+                        Log.d(MainActivity.TAG,e.getMessage());
                         Thread.sleep(1000);
+                        continue;
+                    }
+                    try {
+                        mPlayer = new AudioPlayer(httpSource);
+                        mPlayer.setTargetDelay(mCurrentDelay);
+                        mPlayer.play();
+                    } catch (Exception e) {
+                        mStatus = "Error, retrying...";
+                        Log.d(MainActivity.TAG,e.getMessage());
+                        Thread.sleep(1000);
+                        continue;
+                    }
+                    mWakelock.acquire();
+                    mWifilock.acquire();
+                    while(mPlay && httpSource.ok() && mPlayer.ok()) {
+                        mStatus = "Playing";
+                        Thread.sleep(1000);
+                    }
+                    if (!mPlay) {
+                        mStatus = "Paused";
+                        mPlayer.stop();
+                        mWakelock.release();
+                        mWifilock.release();
                     }
                 } catch (Exception e) {
                     mWakelock.release();
@@ -189,14 +174,6 @@ public class PlayerService extends Service {
             }
         }
     };
-
-    private void setDelay(float seconds) {
-        mCurrentDelay = seconds;
-        mCurrentDelay = Math.max(0.0f, Math.min(AudioPlayer.MAX_DELAY_SECONDS, mCurrentDelay));
-        mCurrentDelay = Math.round(2*mCurrentDelay)/2.0f; // Round to 0.5 seconds increments
-        //mStreamDelaySecondsTV.setText(Float.toString(mCurrentDelay)+" s");
-        if (mPlayer != null) mPlayer.setDelay(mCurrentDelay);
-    }
 
     @NonNull
     @TargetApi(26)

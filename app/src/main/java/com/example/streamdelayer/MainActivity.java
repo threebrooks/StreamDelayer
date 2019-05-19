@@ -57,10 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
         mStreamPlayer = new StreamPlayer(this, findViewById(R.id.topLevelCL));
 
-        Intent startIntent = new Intent(MainActivity.this, PlayerService.class);
-        startIntent.setAction(PlayerService.ACTION_START_PLAYER_SERVICE);
-        startService(startIntent);
-
         /*
         Intent stopIntent = new Intent(MainActivity.this, ForegroundService.class);
                 stopIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);

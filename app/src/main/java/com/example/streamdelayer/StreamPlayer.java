@@ -4,28 +4,15 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.media.Image;
-import android.net.Uri;
-import android.net.wifi.WifiManager;
-import android.os.PowerManager;
 import android.support.v7.widget.AppCompatButton;
-import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.SeekBar;
-import android.widget.TextView;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 public class StreamPlayer {
     long mStreamDelayTapMillisStart = 0;
@@ -40,8 +27,7 @@ public class StreamPlayer {
     AppCompatButton mStreamDelayTapButton = null;
     DelayCircleView mDelayCircleView = null;
 
-    ImageButton mPlaylistStartButton = null;
-    ImageButton mPlaylistPauseButton = null;
+    ImageButton mPlaylistStopButton = null;
     ImageButton mPlaylistAddItemButton = null;
 
     StreamListDatabase mStreamListDB = null;
@@ -74,7 +60,7 @@ public class StreamPlayer {
                     mStreamDelayTapButton.setText("TAP");
                 } else {
                     mStreamDelayTapMillisStart = System.currentTimeMillis();
-                    mStreamDelayTapButton.setText("Counting...");
+                    mStreamDelayTapButton.setText("...");
                 }
             }
         }
@@ -124,13 +110,9 @@ public class StreamPlayer {
     View.OnClickListener mPlaylistButtonsCL = new  View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (v == mPlaylistStartButton) {
+            if (v == mPlaylistStopButton) {
                 Intent startIntent = new Intent(mCtx, PlayerService.class);
-                startIntent.setAction(PlayerService.ACTION_PLAY);
-                mCtx.startService(startIntent);
-            } else if (v == mPlaylistPauseButton) {
-                Intent startIntent = new Intent(mCtx, PlayerService.class);
-                startIntent.setAction(PlayerService.ACTION_PAUSE);
+                startIntent.setAction(PlayerService.ACTION_STOP);
                 mCtx.startService(startIntent);
             } else if (v == mPlaylistAddItemButton) {
                 try {
@@ -166,10 +148,8 @@ public class StreamPlayer {
         mStreamList.setAdapter(new MusicListAdapter(mCtx, mStreamListDB, this));
         //mStreamList.setHasFixedSize(true);
 
-        mPlaylistStartButton = mRootView.findViewById(R.id.playlistStartButton);
-        mPlaylistStartButton.setOnClickListener(mPlaylistButtonsCL);
-        mPlaylistPauseButton = mRootView.findViewById(R.id.playlistPauseButton);
-        mPlaylistPauseButton.setOnClickListener(mPlaylistButtonsCL);
+        mPlaylistStopButton = mRootView.findViewById(R.id.playlistStopButton);
+        mPlaylistStopButton.setOnClickListener(mPlaylistButtonsCL);
         mPlaylistAddItemButton = mRootView.findViewById(R.id.playlistAddItemButton);
         mPlaylistAddItemButton.setOnClickListener(mPlaylistButtonsCL);
     }
