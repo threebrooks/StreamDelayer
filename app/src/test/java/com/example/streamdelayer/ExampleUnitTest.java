@@ -1,4 +1,4 @@
-package com.example.streamdelayer;
+package com.threebrooks.streamdelayer;
 
 import org.junit.Test;
 

@@ -30,7 +30,7 @@ public class StreamListDatabase {
     JSONArray mDB = null;
     public final String STREAM_LIST_PREFERENCE = "stream_list_preference";
 
-    private String DB_INIT = "[ {\"name\": \"BvB\", \"url\": \"https://bvb-live.cast.addradio.de/bvb/live/mp3/high\"} ]";
+    private String DB_INIT = "[ {\"name\": \"BvB NetRadio\", \"url\": \"https://bvb-live.cast.addradio.de/bvb/live/mp3/high\"} ]";
 
     public StreamListDatabase(Context ctx) {
         mCtx = ctx;
