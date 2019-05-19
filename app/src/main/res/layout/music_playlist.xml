@@ -1,19 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/streamPlaylistLL"
     android:orientation="vertical">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/streamListRcv"
+    <android.support.v4.view.ViewPager
+        android:id="@+id/playlistViewPager"
         android:layout_width="match_parent"
         android:layout_height="0dip"
-        android:layout_marginLeft="@dimen/button_row_gap"
-        android:layout_marginRight="@dimen/button_row_gap"
         android:layout_weight="7"
-        android:background="@drawable/playlist" />
+        android:background="@color/l2Whiten">
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/streamTabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            app:tabSelectedTextColor="@color/purple200"
+            app:tabTextColor="@color/l2Whiten">
+            <android.support.design.widget.TabItem
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/music_tab_soccer" />
+            <android.support.design.widget.TabItem
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/music_tab_custom"/>
+        </android.support.design.widget.TabLayout>
+
+    </android.support.v4.view.ViewPager>
 
     <android.support.v4.widget.Space
         android:layout_width="wrap_content"

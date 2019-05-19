@@ -8,6 +8,14 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+
 public class StreamListDatabase {
 
     public class StreamListItem {
@@ -28,14 +36,9 @@ public class StreamListDatabase {
 
     Context mCtx = null;
     JSONArray mDB = null;
-    public final String STREAM_LIST_PREFERENCE = "stream_list_preference";
 
-    private String DB_INIT = "[ {\"name\": \"BvB NetRadio\", \"url\": \"https://bvb-live.cast.addradio.de/bvb/live/mp3/high\"} ]";
-
-    public StreamListDatabase(Context ctx) {
+    public StreamListDatabase(Context ctx, String jsonList) {
         mCtx = ctx;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mCtx);
-        String jsonList = prefs.getString(STREAM_LIST_PREFERENCE,DB_INIT);
         try {
             mDB = new JSONArray(jsonList);
         } catch (Exception e) {
@@ -58,9 +61,10 @@ public class StreamListDatabase {
             pos = getItemCount();
         }
         mDB.put(pos, item.toJsonObject());
+        return pos;
+    }
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mCtx);
-        SharedPreferences.Editor prefsEditor = prefs.edit();
+    String toJson()  throws Exception {
         String jsonString = "[ ";
         for(int idx = 0; idx < mDB.length(); idx++) {
             JSONObject obj = mDB.getJSONObject(idx);
@@ -68,11 +72,25 @@ public class StreamListDatabase {
             if (idx != mDB.length()-1) jsonString += ", ";
         }
         jsonString += " ]";
-        prefsEditor.putString(STREAM_LIST_PREFERENCE, jsonString);
-        prefsEditor.commit();
-        return pos;
-
+        return jsonString;
     }
 
     public int getItemCount() { return mDB.length();}
+
+    public static String EMPTY_DB = "[ ]";
+
+    public static String DownloadDatabase(URL url) {
+        try {
+            URLConnection conn = url.openConnection();
+            int contentLength = conn.getContentLength();
+            DataInputStream stream = new DataInputStream(url.openStream());
+            byte[] buffer = new byte[contentLength];
+            stream.readFully(buffer);
+            stream.close();
+            return new String(buffer, "UTF-8");
+        } catch (MalformedURLException e) {
+        } catch (IOException e) {
+        }
+        return EMPTY_DB;
+    }
 }

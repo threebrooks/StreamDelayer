@@ -4,15 +4,22 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.ViewPager;
 import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewParent;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.TableLayout;
+
+import java.net.URL;
+import java.util.HashMap;
 
 public class StreamPlayer {
     long mStreamDelayTapMillisStart = 0;
@@ -27,12 +34,16 @@ public class StreamPlayer {
     AppCompatButton mStreamDelayTapButton = null;
     DelayCircleView mDelayCircleView = null;
 
+    ViewPager mViewPager = null;
+
     ImageButton mPlaylistStopButton = null;
     ImageButton mPlaylistAddItemButton = null;
 
-    StreamListDatabase mStreamListDB = null;
+    HashMap<String, StreamListDatabase> mStreamListDBs = new HashMap<String, StreamListDatabase>();
+    private static String CUSTOM_DB = "Custom";
+    private static String SOCCER_DB = "Soccer";
 
-    RecyclerView mStreamList = null;
+    HashMap<String, RecyclerView> mStreamLists = new HashMap<String, RecyclerView>();
 
     View.OnClickListener mDelayButtonsCL = new  View.OnClickListener() {
         @Override
@@ -68,12 +79,10 @@ public class StreamPlayer {
 
     public void EditPlaylistEntry(final int pos) {
         AlertDialog.Builder alert = new AlertDialog.Builder(mCtx);
-
         alert.setTitle("Edit stream list item");
 
         try {
-
-            final StreamListDatabase.StreamListItem playlistEntry = mStreamListDB.getItem(pos);
+            final StreamListDatabase.StreamListItem playlistEntry = mStreamListDBs.get(CUSTOM_DB).getItem(pos);
 
             LayoutInflater inflater = (LayoutInflater) mCtx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.playlist_edit_popup, null);
@@ -88,8 +97,8 @@ public class StreamPlayer {
                     try {
                         playlistEntry.mUrl = urlET.getText().toString();
                         playlistEntry.mName = nameET.getText().toString();
-                        int newPos = mStreamListDB.setItem(playlistEntry, pos);
-                        mStreamList.getAdapter().notifyDataSetChanged();
+                        int newPos = mStreamListDBs.get(CUSTOM_DB).setItem(playlistEntry, pos);
+                        mStreamLists.get(CUSTOM_DB).getAdapter().notifyDataSetChanged();
                     } catch (Exception e) {
                         Log.d(MainActivity.TAG, e.getMessage());
                     }
@@ -124,11 +133,29 @@ public class StreamPlayer {
         }
     };
 
+    private static String SOCCER_DB_URL = new URL();
+
     public StreamPlayer(Context ctx, View rootView) {
         mCtx = ctx;
         mRootView = rootView;
 
-        mStreamListDB = new StreamListDatabase(mCtx);
+        LayoutInflater inflater = (LayoutInflater)mCtx.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
+
+        mViewPager = mRootView.findViewById(R.id.playlistViewPager);
+
+        // Custom
+        mStreamListDBs.put(CUSTOM_DB, new StreamListDatabase(mCtx,StreamListDatabase.EMPTY_DB));
+        RecyclerView customRcv = (RecyclerView)inflater.inflate( R.layout.music_playlist_tab, null );
+        customRcv.setLayoutManager(new LinearLayoutManager(mCtx));
+        customRcv.setAdapter(new MusicListAdapter(mCtx, mStreamListDBs.get(CUSTOM_DB), this));
+        mViewPager.addView(customRcv);
+
+        String soccerDB = StreamListDatabase.DownloadDatabase(new URL());
+        mStreamListDBs.put(SOCCER_DB, new StreamListDatabase(mCtx,soccerDB));
+        RecyclerView soccerRcv = (RecyclerView)inflater.inflate( R.layout.music_playlist_tab, null );
+        soccerRcv.setLayoutManager(new LinearLayoutManager(mCtx));
+        soccerRcv.setAdapter(new MusicListAdapter(mCtx, mStreamListDBs.get(SOCCER_DB), this));
+        mViewPager.addView(soccerRcv);
 
         mDelayCircleView = mRootView.findViewById(R.id.delayCircleView);
 
@@ -142,11 +169,6 @@ public class StreamPlayer {
         mStreamDelayPlus5Button.setOnClickListener(mDelayButtonsCL);
         mStreamDelayTapButton = mRootView.findViewById(R.id.streamDelayTapButton);
         mStreamDelayTapButton.setOnClickListener(mDelayButtonsCL);
-
-        mStreamList = mRootView.findViewById(R.id.streamListRcv);
-        mStreamList.setLayoutManager(new LinearLayoutManager(mCtx));
-        mStreamList.setAdapter(new MusicListAdapter(mCtx, mStreamListDB, this));
-        //mStreamList.setHasFixedSize(true);
 
         mPlaylistStopButton = mRootView.findViewById(R.id.playlistStopButton);
         mPlaylistStopButton.setOnClickListener(mPlaylistButtonsCL);
