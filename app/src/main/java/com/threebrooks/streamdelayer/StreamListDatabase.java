@@ -9,12 +9,14 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.ByteBuffer;
 
 public class StreamListDatabase {
 
@@ -56,12 +58,11 @@ public class StreamListDatabase {
         return sli;
     }
 
-    public int setItem(StreamListItem item, int pos)  throws Exception {
+    public void setItem(StreamListItem item, int pos)  throws Exception {
         if (pos < 0) {
             pos = getItemCount();
         }
         mDB.put(pos, item.toJsonObject());
-        return pos;
     }
 
     String toJson()  throws Exception {
@@ -82,15 +83,20 @@ public class StreamListDatabase {
     public static String DownloadDatabase(URL url) {
         try {
             URLConnection conn = url.openConnection();
-            int contentLength = conn.getContentLength();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
             DataInputStream stream = new DataInputStream(url.openStream());
-            byte[] buffer = new byte[contentLength];
-            stream.readFully(buffer);
+            byte[] buffer = new byte[1024];
+            int read;
+            while((read = stream.read(buffer)) != -1) {
+                bos.write(buffer,0,read);
+            }
             stream.close();
-            return new String(buffer, "UTF-8");
+            return bos.toString("UTF-8");
         } catch (MalformedURLException e) {
         } catch (IOException e) {
         }
         return EMPTY_DB;
     }
+
+    public static String CUSTOM_STREAM_LIST_PREFERENCE = "custom_stream_list_preference";
 }
