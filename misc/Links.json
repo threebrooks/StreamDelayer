@@ -3,6 +3,10 @@
     {
       "name": "Borussia Dortmund NetRadio",
       "url": "https://bvb-live.cast.addradio.de/bvb/live/mp3/high"
+    },
+    {
+      "name": "WDR Event",
+      "url": "http://dg-wdr-http-fra-dtag-cdn.cast.addradio.de/wdr/wdr/event/mp3/128/stream.mp3"
     }
   ],
   "Premier League": [
