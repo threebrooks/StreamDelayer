@@ -12,7 +12,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top"
             app:tabSelectedTextColor="@color/purple200"
-            app:tabTextColor="@color/l2Whiten">
+            app:tabTextColor="@color/l3Whiten">
         </android.support.design.widget.TabLayout>
 
     <android.support.v7.widget.RecyclerView

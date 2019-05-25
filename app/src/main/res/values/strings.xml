@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Stream Delayer</string>
+    <string name="app_name">Sportscast Delayer</string>
     <string name="action_settings">Settings</string>
     <string name="music_tab_soccer">Soccer</string>
     <string name="music_tab_custom">Custom</string>

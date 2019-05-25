@@ -1,5 +1,6 @@
 package com.threebrooks.streamdelayer;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -33,7 +34,7 @@ public class StreamPlayer {
     long mStreamDelayTapMillisStart = 0;
 
     View mRootView = null;
-    Context mCtx = null;
+    Activity mAct = null;
 
     AppCompatButton mStreamDelayMinus5Button = null;
     AppCompatButton mStreamDelayMinusPoint5Button = null;
@@ -55,25 +56,25 @@ public class StreamPlayer {
     View.OnClickListener mDelayButtonsCL = new  View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Intent delayIntent = new Intent(mCtx, PlayerService.class);
+            Intent delayIntent = new Intent(mAct, PlayerService.class);
             delayIntent.setAction(PlayerService.ACTION_DELAY);
             if (v == mStreamDelayMinus5Button) {
                 delayIntent.putExtra("delta", -5.0f);
-                mCtx.startService(delayIntent);
+                mAct.startService(delayIntent);
             } else if (v == mStreamDelayMinusPoint5Button) {
                 delayIntent.putExtra("delta", -0.5f);
-                mCtx.startService(delayIntent);
+                mAct.startService(delayIntent);
             }else if (v == mStreamDelayPlusPoint5Button) {
                 delayIntent.putExtra("delta", +0.5f);
-                mCtx.startService(delayIntent);
+                mAct.startService(delayIntent);
             } else if (v == mStreamDelayPlus5Button) {
                 delayIntent.putExtra("delta", +5.0f);
-                mCtx.startService(delayIntent);
+                mAct.startService(delayIntent);
             } else if (v == mStreamDelayTapButton) {
                 if (mStreamDelayTapMillisStart != 0) {
                     float secondsElapsed = (System.currentTimeMillis()-mStreamDelayTapMillisStart)/1000.0f;
                     delayIntent.putExtra("absolute", secondsElapsed);
-                    mCtx.startService(delayIntent);
+                    mAct.startService(delayIntent);
                     mStreamDelayTapMillisStart = 0;
                     mStreamDelayTapButton.setText("TAP");
                 } else {
@@ -85,13 +86,13 @@ public class StreamPlayer {
     };
 
     public void EditPlaylistEntry(final int pos) {
-        AlertDialog.Builder alert = new AlertDialog.Builder(mCtx);
+        AlertDialog.Builder alert = new AlertDialog.Builder(mAct);
         alert.setTitle("Edit stream list item");
 
         try {
             final StreamListDatabase.StreamListItem playlistEntry = mStreamListDBs.get(CUSTOM_DB_IDX).getItem(pos);
 
-            LayoutInflater inflater = (LayoutInflater) mCtx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LayoutInflater inflater = (LayoutInflater) mAct.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.playlist_edit_popup, null);
             final EditText nameET = ll.findViewById(R.id.playlistItemEditName);
             nameET.setText(playlistEntry.mName);
@@ -105,7 +106,7 @@ public class StreamPlayer {
                         playlistEntry.mUrl = urlET.getText().toString();
                         playlistEntry.mName = nameET.getText().toString();
                         mStreamListDBs.get(CUSTOM_DB_IDX).setItem(playlistEntry, pos);
-                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mCtx);
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mAct);
                         SharedPreferences.Editor prefsEditor = prefs.edit();
                         prefsEditor.putString(StreamListDatabase.CUSTOM_STREAM_LIST_PREFERENCE, mStreamListDBs.get(CUSTOM_DB_IDX).toJson());
                         prefsEditor.commit();
@@ -131,9 +132,9 @@ public class StreamPlayer {
         @Override
         public void onClick(View v) {
             if (v == mPlaylistStopButton) {
-                Intent startIntent = new Intent(mCtx, PlayerService.class);
+                Intent startIntent = new Intent(mAct, PlayerService.class);
                 startIntent.setAction(PlayerService.ACTION_STOP);
-                mCtx.startService(startIntent);
+                mAct.startService(startIntent);
             } else if (v == mPlaylistAddItemButton) {
                 try {
                     EditPlaylistEntry(-1);
@@ -155,11 +156,15 @@ public class StreamPlayer {
         public void onTabReselected(TabLayout.Tab tab) {}
     };
 
-    private void AddTab(String tabName, JSONArray tabArray) {
-        mStreamListDBs.add(new StreamListDatabase(mCtx,tabArray));
-        TabLayout.Tab newTab = new TabLayout.Tab();
-        newTab.setText(tabName);
-        mTabLayout.addTab(newTab);
+    private void AddTab(final String tabName, JSONArray tabArray) {
+        mStreamListDBs.add(new StreamListDatabase(mAct,tabArray));
+        mAct.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                TabLayout.Tab newTab = mTabLayout.newTab().setText(tabName);
+                mTabLayout.addTab(newTab);
+            }
+        });
     }
 
     class LinkDBAsync extends AsyncTask<Void, Void, Void> {
@@ -176,11 +181,11 @@ public class StreamPlayer {
                         AddTab(tabName, tabArray);
                     }
 
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mCtx);
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mAct);
                     String customJsonList = prefs.getString(StreamListDatabase.CUSTOM_STREAM_LIST_PREFERENCE, StreamListDatabase.EMPTY_DB);
                     AddTab(CUSTOM_DB, new JSONArray(customJsonList));
                     CUSTOM_DB_IDX = mStreamListDBs.size()-1;
-                    switchToTab(CUSTOM_DB_IDX);
+                    switchToTab(0);
                 } catch (Exception e) {
                     Log.d(MainActivity.TAG, e.getMessage());
                 }
@@ -192,23 +197,28 @@ public class StreamPlayer {
         }
     }
 
-    private void switchToTab(int idx) {
-        mPlaylistRcv.setAdapter(new MusicListAdapter(mCtx, mStreamListDBs.get(idx), StreamPlayer.this));
-        mPlaylistRcv.getAdapter().notifyDataSetChanged();
-        mRootView.invalidate();
+    private void switchToTab(final int idx) {
+        mAct.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mPlaylistRcv.setAdapter(new MusicListAdapter(mAct, mStreamListDBs.get(idx), StreamPlayer.this));
+                mPlaylistRcv.getAdapter().notifyDataSetChanged();
+                mRootView.invalidate();
+            }
+        });
     }
 
     private static String LINK_DB_URL = "https://raw.githubusercontent.com/threebrooks/StreamDelayer/master/misc/Links.json";
 
-    public StreamPlayer(Context ctx, View rootView) {
-        mCtx = ctx;
+    public StreamPlayer(Activity act, View rootView) {
+        mAct = act;
         mRootView = rootView;
 
         mTabLayout = mRootView.findViewById(R.id.playlistTabLayout);
         mTabLayout.addOnTabSelectedListener(mTabSelectL);
 
         mPlaylistRcv = mRootView.findViewById(R.id.playlistRcv);
-        mPlaylistRcv.setLayoutManager(new LinearLayoutManager(mCtx));
+        mPlaylistRcv.setLayoutManager(new LinearLayoutManager(mAct));
 
         mDelayCircleView = mRootView.findViewById(R.id.delayCircleView);
 
