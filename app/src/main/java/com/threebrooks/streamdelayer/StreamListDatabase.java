@@ -39,13 +39,9 @@ public class StreamListDatabase {
     Context mCtx = null;
     JSONArray mDB = null;
 
-    public StreamListDatabase(Context ctx, String jsonList) {
+    public StreamListDatabase(Context ctx, JSONArray db) {
         mCtx = ctx;
-        try {
-            mDB = new JSONArray(jsonList);
-        } catch (Exception e) {
-            Log.d(MainActivity.TAG, e.getMessage());
-        }
+        mDB = db;
     }
 
     public StreamListItem getItem(int pos) throws Exception {

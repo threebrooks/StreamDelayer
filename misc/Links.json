@@ -1,6 +1,10 @@
-[
-  {
-    "name": "Borussia Dortmund NetRadio", 
-    "url": "https://bvb-live.cast.addradio.de/bvb/live/mp3/high"
-  } 
-]
+{
+  "Bundesliga": [
+    {
+      "name": "Borussia Dortmund NetRadio",
+      "url": "https://bvb-live.cast.addradio.de/bvb/live/mp3/high"
+    }
+  ],
+  "Premier League": [
+  ] 
+}

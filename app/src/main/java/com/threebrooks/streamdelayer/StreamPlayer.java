@@ -21,8 +21,13 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class StreamPlayer {
     long mStreamDelayTapMillisStart = 0;
@@ -43,11 +48,9 @@ public class StreamPlayer {
     ImageButton mPlaylistStopButton = null;
     ImageButton mPlaylistAddItemButton = null;
 
-    HashMap<String, StreamListDatabase> mStreamListDBs = new HashMap<String, StreamListDatabase>();
+    ArrayList<StreamListDatabase> mStreamListDBs = new ArrayList<>();
     private static String CUSTOM_DB = "Custom";
-    private static String SOCCER_DB = "Soccer";
-
-    HashMap<String, RecyclerView> mStreamLists = new HashMap<String, RecyclerView>();
+    private static int CUSTOM_DB_IDX = 0;
 
     View.OnClickListener mDelayButtonsCL = new  View.OnClickListener() {
         @Override
@@ -86,7 +89,7 @@ public class StreamPlayer {
         alert.setTitle("Edit stream list item");
 
         try {
-            final StreamListDatabase.StreamListItem playlistEntry = mStreamListDBs.get(CUSTOM_DB).getItem(pos);
+            final StreamListDatabase.StreamListItem playlistEntry = mStreamListDBs.get(CUSTOM_DB_IDX).getItem(pos);
 
             LayoutInflater inflater = (LayoutInflater) mCtx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.playlist_edit_popup, null);
@@ -101,12 +104,12 @@ public class StreamPlayer {
                     try {
                         playlistEntry.mUrl = urlET.getText().toString();
                         playlistEntry.mName = nameET.getText().toString();
-                        mStreamListDBs.get(CUSTOM_DB).setItem(playlistEntry, pos);
+                        mStreamListDBs.get(CUSTOM_DB_IDX).setItem(playlistEntry, pos);
                         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mCtx);
                         SharedPreferences.Editor prefsEditor = prefs.edit();
-                        prefsEditor.putString(StreamListDatabase.CUSTOM_STREAM_LIST_PREFERENCE, mStreamListDBs.get(CUSTOM_DB).toJson());
+                        prefsEditor.putString(StreamListDatabase.CUSTOM_STREAM_LIST_PREFERENCE, mStreamListDBs.get(CUSTOM_DB_IDX).toJson());
                         prefsEditor.commit();
-                        switchToTab(CUSTOM_DB);
+                        switchToTab(CUSTOM_DB_IDX);
                     } catch (Exception e) {
                         Log.d(MainActivity.TAG, e.getMessage());
                     }
@@ -144,12 +147,7 @@ public class StreamPlayer {
     TabLayout.OnTabSelectedListener mTabSelectL = new TabLayout.OnTabSelectedListener() {
         @Override
         public void onTabSelected(TabLayout.Tab tab) {
-            int pos = tab.getPosition();
-            if (pos == 0) {
-                switchToTab(CUSTOM_DB);
-            } else if (pos == 1) {
-                switchToTab(SOCCER_DB);
-            }
+            switchToTab(tab.getPosition());
         }
         @Override
         public void onTabUnselected(TabLayout.Tab tab) {}
@@ -157,14 +155,35 @@ public class StreamPlayer {
         public void onTabReselected(TabLayout.Tab tab) {}
     };
 
-    class SoccerDBAsync extends AsyncTask<Void, Void, Void> {
+    private void AddTab(String tabName, JSONArray tabArray) {
+        mStreamListDBs.add(new StreamListDatabase(mCtx,tabArray));
+        TabLayout.Tab newTab = new TabLayout.Tab();
+        newTab.setText(tabName);
+        mTabLayout.addTab(newTab);
+    }
+
+    class LinkDBAsync extends AsyncTask<Void, Void, Void> {
         private Exception exception;
         protected Void doInBackground(Void... nop) {
             try {
-                String json = StreamListDatabase.DownloadDatabase(new URL(SOCCER_DB_URL));
-                Thread.sleep(1000);
-                mStreamListDBs.put(SOCCER_DB, new StreamListDatabase(mCtx,json));
-                mTabLayout.getTabAt(1).select();
+                String jsonString = StreamListDatabase.DownloadDatabase(new URL(LINK_DB_URL));
+                try {
+                    JSONObject rootObj = new JSONObject(jsonString);
+                    Iterator tabIt = rootObj.keys();
+                    while(tabIt.hasNext()) {
+                        String tabName = (String)tabIt.next();
+                        JSONArray tabArray = rootObj.getJSONArray(tabName);
+                        AddTab(tabName, tabArray);
+                    }
+
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mCtx);
+                    String customJsonList = prefs.getString(StreamListDatabase.CUSTOM_STREAM_LIST_PREFERENCE, StreamListDatabase.EMPTY_DB);
+                    AddTab(CUSTOM_DB, new JSONArray(customJsonList));
+                    CUSTOM_DB_IDX = mStreamListDBs.size()-1;
+                    switchToTab(CUSTOM_DB_IDX);
+                } catch (Exception e) {
+                    Log.d(MainActivity.TAG, e.getMessage());
+                }
                 return null;
             } catch (Exception e) {
                 this.exception = e;
@@ -173,13 +192,13 @@ public class StreamPlayer {
         }
     }
 
-    private void switchToTab(String key) {
-        mPlaylistRcv.setAdapter(new MusicListAdapter(mCtx, mStreamListDBs.get(key), StreamPlayer.this));
+    private void switchToTab(int idx) {
+        mPlaylistRcv.setAdapter(new MusicListAdapter(mCtx, mStreamListDBs.get(idx), StreamPlayer.this));
         mPlaylistRcv.getAdapter().notifyDataSetChanged();
         mRootView.invalidate();
     }
 
-    private static String SOCCER_DB_URL = "https://raw.githubusercontent.com/threebrooks/StreamDelayer/master/misc/Links.json";
+    private static String LINK_DB_URL = "https://raw.githubusercontent.com/threebrooks/StreamDelayer/master/misc/Links.json";
 
     public StreamPlayer(Context ctx, View rootView) {
         mCtx = ctx;
@@ -190,12 +209,6 @@ public class StreamPlayer {
 
         mPlaylistRcv = mRootView.findViewById(R.id.playlistRcv);
         mPlaylistRcv.setLayoutManager(new LinearLayoutManager(mCtx));
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mCtx);
-        String customJsonList = prefs.getString(StreamListDatabase.CUSTOM_STREAM_LIST_PREFERENCE,StreamListDatabase.EMPTY_DB);
-        mStreamListDBs.put(CUSTOM_DB, new StreamListDatabase(mCtx,customJsonList));
-        mStreamListDBs.put(SOCCER_DB, new StreamListDatabase(mCtx,StreamListDatabase.EMPTY_DB));
-        switchToTab(CUSTOM_DB);
 
         mDelayCircleView = mRootView.findViewById(R.id.delayCircleView);
 
@@ -215,7 +228,7 @@ public class StreamPlayer {
         mPlaylistAddItemButton = mRootView.findViewById(R.id.playlistAddItemButton);
         mPlaylistAddItemButton.setOnClickListener(mPlaylistButtonsCL);
 
-        new SoccerDBAsync().execute();
+        new LinkDBAsync().execute();
     }
 
 }

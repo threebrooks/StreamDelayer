@@ -13,14 +13,6 @@
             android:layout_gravity="top"
             app:tabSelectedTextColor="@color/purple200"
             app:tabTextColor="@color/l2Whiten">
-            <android.support.design.widget.TabItem
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="@string/music_tab_custom" />
-            <android.support.design.widget.TabItem
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="@string/music_tab_soccer"/>
         </android.support.design.widget.TabLayout>
 
     <android.support.v7.widget.RecyclerView
