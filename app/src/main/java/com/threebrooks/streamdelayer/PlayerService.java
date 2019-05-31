@@ -167,9 +167,9 @@ public class PlayerService extends Service {
                         mWifilock.release();
                     }
                 } catch (Exception e) {
-                    mWakelock.release();
-                    mWifilock.release();
-                    Log.d(MainActivity.TAG,e.getMessage());
+                    Log.d(MainActivity.TAG, e.getMessage());
+                    if (mWakelock.isHeld()) mWakelock.release();
+                    if (mWifilock.isHeld()) mWifilock.release();
                 }
             }
         }

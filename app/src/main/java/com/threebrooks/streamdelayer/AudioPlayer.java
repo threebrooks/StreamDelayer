@@ -23,14 +23,17 @@ public class AudioPlayer {
     public static float MIN_DELAY_SECONDS  = 2.0f;
     public static float DELAY_RESOLUTION = 0.5f;
     public static float MAX_DRIFT  = 1.0f;
+    private static double SMOOTH_ALPHA = 0.999;
+    private static double SMOOTH_GAMMA = 0.999;
     private boolean mOk = false;
     private boolean mPlay = false;
     private float mTargetDelay = 0.0f;
 
-    float mSmoothedDrift = 0.0f;
-    float mSmoothFac = 0.9f;
+    //TimeSmoother mWriteSmoother = null;
+    //TimeSmoother mReadSmoother = null;
 
     private int mBytesPerSecond = 0;
+    private int mBytesPerSample = 0;
 
     public AudioPlayer(final HttpMediaSource mediaSource) throws Exception {
         mMediaSource = mediaSource;
@@ -49,7 +52,8 @@ public class AudioPlayer {
                         mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE),
                         mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)),
                 null, null, 0);
-        mBytesPerSecond = mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)*mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)*2;
+        mBytesPerSample = mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)*2;
+        mBytesPerSecond = mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)*mBytesPerSample;
         mRingBuffer = new RingBuffer((int)(1.01f*MAX_DELAY_SECONDS*mBytesPerSecond), 0);
 
         mOk = true;
@@ -70,17 +74,17 @@ public class AudioPlayer {
     public void setTargetDelay(float delay) {
         mTargetDelay = Math.max(MIN_DELAY_SECONDS, Math.min(MAX_DELAY_SECONDS, delay));
         mTargetDelay = roundToFraction(mTargetDelay, DELAY_RESOLUTION);
-        long delayInSamples = (long)(delay*mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
-        long delayInBytes = (2*delayInSamples*mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
-        mRingBuffer.setHeadOffset(delayInBytes);
+        mRingBuffer.setHeadOffset(secondsToSampleRoundedBytes(mTargetDelay));
+        //if (mReadSmoother != null) mReadSmoother.resetTo(mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
     }
 
+    public long secondsToSampleRoundedBytes(double s) {
+        long val = ((long)(s*mBytesPerSecond)/mBytesPerSample)*mBytesPerSample;
+        return val;
+    }
 
     public float getTargetDelay() {return mTargetDelay;}
-
-    private float getEffectiveDelay() {return (mRingBuffer.getHeadPos()-mRingBuffer.getTailPos())/(float)(mBytesPerSecond);}
-
-    public float getDrift() {return mSmoothedDrift;}
+    public float getCurrentDelay() { return (mRingBuffer.getHeadPos()-mRingBuffer.getTailPos())/(float)mBytesPerSecond;}
 
     class WriteThread extends Thread {
         @Override
@@ -110,12 +114,18 @@ public class AudioPlayer {
                                 httpAudioBuffer = new byte[bufferInfo.size];
                             }
 
-                            Log.d(MainActivity.TAG,"Read "+bufferInfo.size);
+                            //Log.d(MainActivity.TAG,"Read "+bufferInfo.size);
 
                             outputBuffer.rewind();
                             outputBuffer.get(httpAudioBuffer, 0, bufferInfo.size);
                             mRingBuffer.add(httpAudioBuffer, bufferInfo.size);
                             mDecoder.releaseOutputBuffer(outputIndex, false);
+
+                            /*if (mWriteSmoother == null) {
+                                mWriteSmoother = new TimeSmoother(SMOOTH_ALPHA, SMOOTH_GAMMA, mRingBuffer.getHeadPos()/(double)mBytesPerSecond, 1.0);
+                            }
+                            mWriteSmoother.addVal(mRingBuffer.getHeadPos()/(double)mBytesPerSecond);*/
+                            //Log.d(MainActivity.TAG,"###1 "+(mRingBuffer.getHeadPos()/(double)mBytesPerSecond)+" "+mWriteSmoother.getCurrentVal());
                         }
                     }
 
@@ -150,6 +160,17 @@ public class AudioPlayer {
                         continue;
                     }
 
+                    /*
+                    if (mReadSmoother == null) {
+                        mReadSmoother = new TimeSmoother(SMOOTH_ALPHA, SMOOTH_GAMMA, mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
+                    }
+                    mReadSmoother.addVal(mRingBuffer.getTailPos()/(double)mBytesPerSecond);
+
+                    if (mReadSmoother != null && mWriteSmoother != null) {
+                        Log.d(MainActivity.TAG,mWriteSmoother.getCurrentVal()+"-"+mReadSmoother.getCurrentVal());
+                        Log.d(MainActivity.TAG,"Drift="+(mWriteSmoother.getCurrentVal()-mReadSmoother.getCurrentVal()));
+                    }*/
+
                     if (audioTrack == null) {
                         audioTrack = new AudioTrack(
                                 AudioManager.STREAM_MUSIC,
@@ -162,15 +183,11 @@ public class AudioPlayer {
                         audioTrack.play();
                     }
 
-                    Log.d(MainActivity.TAG,"Wrote "+chunkSize);
+                    //Log.d(MainActivity.TAG,"Wrote "+chunkSize);
 
                     audioTrack.write(delayedAudioBuffer, 0, chunkSize);
 
-                    float drift = getEffectiveDelay()-getTargetDelay();
-                    mSmoothedDrift = mSmoothFac*mSmoothedDrift+(1.0f-mSmoothFac)*drift;
-                    if (Math.abs(mSmoothedDrift) > MAX_DRIFT) {
-                        setTargetDelay(getTargetDelay());
-                    }
+                    if ((getCurrentDelay()-getTargetDelay()) > 1.0f) setTargetDelay(getTargetDelay());
                 }
             } catch (Exception e) {
                 mOk = false;

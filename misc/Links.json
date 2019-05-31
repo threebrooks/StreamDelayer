@@ -1,8 +1,20 @@
 {
   "Bundesliga": [
     {
-      "name": "Borussia Dortmund NetRadio",
+      "name": "BMG FohlenRadio",
+      "url": "http://dg-ice-eco-http-fra-eco-cdn.cast.addradio.de/borussiamg/livestream.mp3"
+    },
+    {
+      "name": "BVB NetRadio",
       "url": "https://bvb-live.cast.addradio.de/bvb/live/mp3/high"
+    },
+    {
+      "name": "Köln FC-Radio",
+      "url": "http://mp3.fckoeln.c.nmdn.net/fckoeln/livestream01.mp3"
+    },
+    {
+      "name": "HSV NetRadio",
+      "url": "https://cdn.laola1.tv/hsv_live/audioplayer/HSV_Netradio_16_17.mp3"
     },
     {
       "name": "WDR Event",
