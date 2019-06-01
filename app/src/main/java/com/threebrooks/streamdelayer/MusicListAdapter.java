@@ -31,7 +31,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
         View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.music_player_item, null, false);
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         layoutView.setLayoutParams(lp);
-        MusicListItemHolder rcv = new MusicListItemHolder(layoutView, this);
+        MusicListItemHolder rcv = new MusicListItemHolder(mCtx, layoutView, this);
         return rcv;
     }
 
@@ -47,7 +47,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
                     return true;
                 }
             });
-            //holder.streamUrlET.setText(item.mUrl);
+            holder.streamUrl = item.mUrl;
             holder.streamNameET.setText(item.mName);
             holder.mAdapterPosition = position;
         } catch (Exception e) {

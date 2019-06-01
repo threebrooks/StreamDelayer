@@ -38,6 +38,7 @@ public class PlayerService extends Service {
     float mCurrentDelay = 0.0f;
     boolean mPlay = false;
     URL mUrl = null;
+    String mName = "";
     private String mStatus = "";
 
     PowerManager.WakeLock mWakelock = null;
@@ -78,12 +79,12 @@ public class PlayerService extends Service {
                 channelId = "";
             }
 
-            String name = intent.getStringExtra("name");
+            mName = intent.getStringExtra("name");
             String url = intent.getStringExtra("url");
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
                     .setContentTitle(MainActivity.APP_NAME)
-                    .setContentText("Playing "+name)
+                    .setContentText("Playing "+mName)
                     .setSmallIcon(R.drawable.ic_baseline_play_arrow_24px)
                     .setContentIntent(pendingIntent)
                     .setOngoing(true)
@@ -95,6 +96,13 @@ public class PlayerService extends Service {
             mWakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MainActivity.TAG);
             WifiManager wm = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             mWifilock = wm.createWifiLock(MainActivity.TAG);
+
+            if (mLoadPlayThread != null) {
+                mPlay = false;
+                try {
+                    mLoadPlayThread.join();
+                } catch (Exception e) {}
+            }
 
             try {
                 mUrl = new URL(url);
@@ -157,11 +165,11 @@ public class PlayerService extends Service {
                     mWakelock.acquire();
                     mWifilock.acquire();
                     while(mPlay && httpSource.ok() && mPlayer.ok()) {
-                        mStatus = "Playing";
+                        mStatus = "Playing "+mName;
                         Thread.sleep(1000);
                     }
                     if (!mPlay) {
-                        mStatus = "Paused";
+                        mStatus = "Stopped";
                         mPlayer.stop();
                         mWakelock.release();
                         mWifilock.release();

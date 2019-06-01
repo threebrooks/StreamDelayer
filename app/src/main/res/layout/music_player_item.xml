@@ -15,11 +15,11 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
-                    android:padding="5dp"
+                    android:padding="2dp"
                     android:textSize="25sp"
                     android:ellipsize="end"
                     android:singleLine="true"
-                    android:textColor="@color/purple200"
+                    android:textColor="@color/l2Whiten"
                     android:background="@color/l2Whiten"/>
 <!--
         <TextView
