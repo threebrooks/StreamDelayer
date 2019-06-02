@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
@@ -21,10 +22,14 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -85,12 +90,15 @@ public class StreamPlayer {
         }
     };
 
-    public void EditPlaylistEntry(final int pos) {
+    public void EditPlaylistEntry(final int pos, String url) {
         AlertDialog.Builder alert = new AlertDialog.Builder(mAct);
         alert.setTitle("Edit stream list item");
 
         try {
             final StreamListDatabase.StreamListItem playlistEntry = mStreamListDBs.get(CUSTOM_DB_IDX).getItem(pos);
+            if (pos == -1) {
+                playlistEntry.mUrl = url;
+            }
 
             LayoutInflater inflater = (LayoutInflater) mAct.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.playlist_edit_popup, null);
@@ -121,6 +129,21 @@ public class StreamPlayer {
                 public void onClick(DialogInterface dialog, int whichButton) {
                 }
             });
+            alert.setNeutralButton("Delete", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+                    try {
+                        mStreamListDBs.get(CUSTOM_DB_IDX).deleteItem(pos);
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mAct);
+                        SharedPreferences.Editor prefsEditor = prefs.edit();
+                        prefsEditor.putString(StreamListDatabase.CUSTOM_STREAM_LIST_PREFERENCE, mStreamListDBs.get(CUSTOM_DB_IDX).toJson());
+                        prefsEditor.commit();
+                        switchToTab(CUSTOM_DB_IDX);
+                    } catch (Exception e) {
+                        Log.d(MainActivity.TAG, e.getMessage());
+                    }
+                }
+            });
+
 
             alert.show();
         } catch (Exception e) {
@@ -137,13 +160,29 @@ public class StreamPlayer {
                 mAct.startService(startIntent);
             } else if (v == mPlaylistAddItemButton) {
                 try {
-                    EditPlaylistEntry(-1);
+                    EditPlaylistEntry(-1, "");
                 } catch (Exception e) {
                     Log.d(MainActivity.TAG, e.getMessage());
                 }
             }
         }
     };
+
+    public void addM3U(Uri uri) {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(mAct.getContentResolver().openInputStream(uri)));
+            String line = "";
+            while ((line = reader.readLine()) != null) {
+                if (!line.startsWith("#")) {
+                    Log.d(MainActivity.TAG,"Adding "+line);
+                    EditPlaylistEntry(-1,line);
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            Toast.makeText(mAct, "Could not open "+uri.toString(), Toast.LENGTH_LONG);
+        }
+    }
 
     TabLayout.OnTabSelectedListener mTabSelectL = new TabLayout.OnTabSelectedListener() {
         @Override

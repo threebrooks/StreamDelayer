@@ -40,7 +40,7 @@ public class DelayCircleView extends View {
         Paint p = new Paint();
         p.setColor(ContextCompat.getColor(mCtx, R.color.purple200Grey));
         p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(radius/10.0f);
+        p.setStrokeWidth(radius/7.0f);
         canvas.drawCircle(getWidth()/2.0f, getHeight()/2.0f, radius, p);
 
         if (mArcRect == null) {

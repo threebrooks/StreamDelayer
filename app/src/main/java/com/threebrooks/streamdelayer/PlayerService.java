@@ -20,6 +20,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 import java.net.URL;
 
@@ -116,24 +117,28 @@ public class PlayerService extends Service {
         } else if (intent.getAction().equals(ACTION_STOP)) {
             mPlay = false;
             try {
-                mLoadPlayThread.join();
-                mLoadPlayThread = null;
+                if (mLoadPlayThread != null) {
+                    mLoadPlayThread.join();
+                    mLoadPlayThread = null;
+                } else {
+                    Toast.makeText(this, R.string.stop_nothing_is_playing, Toast.LENGTH_SHORT).show();
+                }
             } catch (Exception e) {
                 Log.d(MainActivity.TAG, e.getMessage());
             }
             stopForeground(true);
             stopSelf();
         } else if (intent.getAction().equals(ACTION_DELAY)) {
-            if (intent.hasExtra("delta")) {
-                mPlayer.setTargetDelay(mPlayer.getTargetDelay()+ intent.getFloatExtra("delta", 0.0f));
+            if (mPlayer != null) {
+                if (intent.hasExtra("delta")) {
+                    mPlayer.setTargetDelay(mPlayer.getTargetDelay() + intent.getFloatExtra("delta", 0.0f));
+                }
+                if (intent.hasExtra("absolute")) {
+                    mPlayer.setTargetDelay(intent.getFloatExtra("absolute", mPlayer.getTargetDelay()));
+                }
+            }else {
+                Toast.makeText(this, R.string.stop_nothing_is_playing, Toast.LENGTH_SHORT).show();
             }
-            if (intent.hasExtra("absolute")) {
-                mPlayer.setTargetDelay(intent.getFloatExtra("absolute", mPlayer.getTargetDelay()));
-            }
-        } else if (intent.getAction().equals(ACTION_STOP)) {
-            Log.i(TAG, "Received Stop Foreground Intent");
-            stopForeground(true);
-            stopSelf();
         }
         return START_NOT_STICKY;
     }
@@ -201,6 +206,12 @@ public class PlayerService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (mLoadPlayThread != null) {
+            mPlay = false;
+            try {
+                mLoadPlayThread.join();
+            } catch (Exception e) {}
+        }
         Log.i(TAG, "In onDestroy");
     }
 

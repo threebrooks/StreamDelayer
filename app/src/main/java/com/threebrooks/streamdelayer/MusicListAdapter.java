@@ -43,7 +43,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
             holder.mMainLL.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    mStreamPlayer.EditPlaylistEntry(position);
+                    mStreamPlayer.EditPlaylistEntry(position,"");
                     return true;
                 }
             });

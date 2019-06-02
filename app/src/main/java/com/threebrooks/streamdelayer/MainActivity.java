@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.design.widget.FloatingActionButton;
@@ -46,13 +47,31 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mStreamPlayer = new StreamPlayer(this, findViewById(R.id.topLevelCL));
+        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            // Should we show an explanation?
+            if (shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                // Explain to the user why we need to read the contacts
+            }
 
-        /*
-        Intent stopIntent = new Intent(MainActivity.this, ForegroundService.class);
-                stopIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
-                startService(stopIntent);
-         */
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+            return;
+        }
+
+        if (mStreamPlayer == null) mStreamPlayer = new StreamPlayer(this, findViewById(R.id.topLevelCL));
+
+        final Intent intent = getIntent();
+        String intentType = intent.getType();
+        if (intentType != null && (intentType.equals("audio/mpegurl") ||
+                intentType.equals("application/vnd.apple.mpegurl") ||
+                intentType.equals("application/x-mpegurl"))) {
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mStreamPlayer.addM3U(intent.getData());
+                }
+            }, 1000);
+        }
     }
 
     @Override

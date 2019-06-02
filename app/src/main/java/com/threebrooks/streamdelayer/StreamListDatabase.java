@@ -61,6 +61,10 @@ public class StreamListDatabase {
         mDB.put(pos, item.toJsonObject());
     }
 
+    public void deleteItem(int pos) {
+        mDB.remove(pos);
+    }
+
     String toJson()  throws Exception {
         String jsonString = "[ ";
         for(int idx = 0; idx < mDB.length(); idx++) {
