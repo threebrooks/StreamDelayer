@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -21,10 +22,13 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 
 import java.util.ArrayList;
@@ -46,6 +50,33 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        LinearLayout mainLL = findViewById(R.id.contentMainLL);
+
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            mainLL.setOrientation(LinearLayout.VERTICAL);
+            {
+                LinearLayout liveStreamerLL = findViewById(R.id.liveStreamerLL);
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) liveStreamerLL.getLayoutParams();
+                lp.height = 0;
+                lp.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                liveStreamerLL.setLayoutParams(lp);
+            }
+            {
+                View dividerView = findViewById(R.id.dividerView);
+                ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) dividerView.getLayoutParams();
+                lp.height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics());;
+                lp.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                dividerView.setLayoutParams(lp);
+            }
+            {
+                LinearLayout musicPlayerLL = findViewById(R.id.musicPlaylistLL);
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) musicPlayerLL.getLayoutParams();
+                lp.height = 0;
+                lp.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                musicPlayerLL.setLayoutParams(lp);
+            }
+        }
 
         if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             // Should we show an explanation?

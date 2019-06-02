@@ -7,15 +7,23 @@
     android:orientation="horizontal"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".MainActivity"
-    tools:showIn="@layout/activity_main">
+    tools:showIn="@layout/activity_main"
+    android:id="@+id/contentMainLL">
 
     <LinearLayout
+        android:id="@+id/liveStreamerLL"
         android:layout_width="0dip"
         android:layout_height="match_parent"
         android:layout_weight="1">
         <include layout="@layout/live_streamer" />
     </LinearLayout>
+    <View
+        android:id="@+id/dividerView"
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/l3Whiten" />
     <LinearLayout
+        android:id="@+id/musicPlaylistLL"
         android:layout_width="0dip"
         android:layout_height="match_parent"
         android:layout_weight="1">
