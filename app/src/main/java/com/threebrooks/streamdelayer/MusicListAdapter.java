@@ -1,5 +1,6 @@
 package com.threebrooks.streamdelayer;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.ContextCompat;
@@ -15,13 +16,13 @@ import java.util.List;
 public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
 {
     private StreamListDatabase mDB;
-    private Context mCtx;
+    private Activity mAct;
     private StreamPlayer mStreamPlayer;
 
-    public MusicListAdapter(Context ctx, StreamListDatabase db, StreamPlayer streamPlayer)
+    public MusicListAdapter(Activity act, StreamListDatabase db, StreamPlayer streamPlayer)
     {
         mDB = db;
-        mCtx = ctx;
+        mAct = act;
         mStreamPlayer = streamPlayer;
     }
 
@@ -31,7 +32,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
         View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.music_player_item, null, false);
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         layoutView.setLayoutParams(lp);
-        MusicListItemHolder rcv = new MusicListItemHolder(mCtx, layoutView, this);
+        MusicListItemHolder rcv = new MusicListItemHolder(mAct, layoutView, this);
         return rcv;
     }
 
@@ -64,11 +65,11 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListItemHolder>
     public void playItem(int pos) {
         try {
             URL url = new URL(mDB.getItem(pos).mUrl);
-            Intent startIntent = new Intent(mCtx, PlayerService.class);
+            Intent startIntent = new Intent(mAct, PlayerService.class);
             startIntent.setAction(PlayerService.ACTION_START);
             startIntent.putExtra("url", url.toString());
             startIntent.putExtra("name", mDB.getItem(pos).mName);
-            mCtx.startService(startIntent);
+            mAct.startService(startIntent);
         } catch (Exception e) {
             Log.d(MainActivity.TAG, e.getMessage());
         }

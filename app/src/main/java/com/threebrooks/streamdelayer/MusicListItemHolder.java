@@ -1,5 +1,6 @@
 package com.threebrooks.streamdelayer;
 
+import android.app.Activity;
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
@@ -22,7 +23,7 @@ public class MusicListItemHolder extends RecyclerView.ViewHolder implements View
     MusicListAdapter mAdapter;
     Thread mCheckThread = null;
 
-    public MusicListItemHolder(final Context ctx, View itemView, MusicListAdapter adapter)
+    public MusicListItemHolder(final Activity act, View itemView, MusicListAdapter adapter)
     {
         super(itemView);
         itemView.setOnClickListener(this);
@@ -36,11 +37,19 @@ public class MusicListItemHolder extends RecyclerView.ViewHolder implements View
                         URL url = new URL(streamUrl);
                         URLConnection conn = url.openConnection();
                         conn.getInputStream();
-                        streamNameET.setTextColor(ContextCompat.getColor(ctx, R.color.purple200));
-                        //Log.d(MainActivity.TAG, "Success for "+streamUrl);
+                        act.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                streamNameET.setTextColor(ContextCompat.getColor(act, R.color.purple200));
+                            }
+                        });
                     } catch (Exception e) {
-                        streamNameET.setTextColor(ContextCompat.getColor(ctx, R.color.l2Whiten));
-                        //Log.d(MainActivity.TAG, "Failure for "+streamUrl);
+                        act.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                streamNameET.setTextColor(ContextCompat.getColor(act, R.color.l2Whiten));
+                            }
+                        });
                     }
                     try {
                         Thread.sleep(5000);
