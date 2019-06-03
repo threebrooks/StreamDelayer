@@ -60,7 +60,7 @@ public class DelayCircleView extends View {
                     false,
                     p);
 
-            String delayText =  "Delay: "+audioPlayer.getTargetDelay()+"s";
+            String delayText =  "Delay: "+String.format("%.1f",audioPlayer.getCurrentDelay())+"s";
             p.setColor(ContextCompat.getColor(mCtx, R.color.fontPrimary));
             p.setTextSize(100.0f);
             p.setStyle(Paint.Style.FILL);

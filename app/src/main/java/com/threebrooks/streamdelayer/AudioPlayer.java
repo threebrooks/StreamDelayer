@@ -7,7 +7,9 @@ import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.support.transition.Transition;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.nio.ByteBuffer;
 
@@ -21,21 +23,21 @@ public class AudioPlayer {
 
     public static float MAX_DELAY_SECONDS  = 60.0f;
     public static float MIN_DELAY_SECONDS  = 2.0f;
-    public static float DELAY_RESOLUTION = 0.5f;
-    public static float MAX_DRIFT  = 1.0f;
-    private static double SMOOTH_ALPHA = 0.999;
-    private static double SMOOTH_GAMMA = 0.999;
+    private static double SMOOTH_ALPHA = 0.9;
+    private static double SMOOTH_GAMMA = 0.9;
     private boolean mOk = false;
     private boolean mPlay = false;
-    private float mTargetDelay = 0.0f;
 
-    //TimeSmoother mWriteSmoother = null;
-    //TimeSmoother mReadSmoother = null;
+    TimeSmoother mWriteSmoother = null;
+    TimeSmoother mReadSmoother = null;
 
     private int mBytesPerSecond = 0;
     private int mBytesPerSample = 0;
 
-    public AudioPlayer(final HttpMediaSource mediaSource) throws Exception {
+    Context mCtx  = null;
+
+    public AudioPlayer(Context ctx, final HttpMediaSource mediaSource) throws Exception {
+        mCtx = ctx;
         mMediaSource = mediaSource;
         mExtractor = new MediaExtractor();
         mExtractor.setDataSource(mMediaSource);
@@ -54,7 +56,7 @@ public class AudioPlayer {
                 null, null, 0);
         mBytesPerSample = mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)*2;
         mBytesPerSecond = mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)*mBytesPerSample;
-        mRingBuffer = new RingBuffer((int)(1.01f*MAX_DELAY_SECONDS*mBytesPerSecond), 0);
+        mRingBuffer = new RingBuffer((int)(1.1f*MAX_DELAY_SECONDS*mBytesPerSecond), 0);
 
         mOk = true;
         mPlay = true;
@@ -71,11 +73,23 @@ public class AudioPlayer {
         return Math.round(x / resolution) * resolution;
     }
 
-    public void setTargetDelay(float delay) {
-        mTargetDelay = Math.max(MIN_DELAY_SECONDS, Math.min(MAX_DELAY_SECONDS, delay));
-        mTargetDelay = roundToFraction(mTargetDelay, DELAY_RESOLUTION);
-        mRingBuffer.setHeadOffset(secondsToSampleRoundedBytes(mTargetDelay));
-        //if (mReadSmoother != null) mReadSmoother.resetTo(mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
+    public void setAbsoluteDelay(float delay) {
+        delay = Math.max(MIN_DELAY_SECONDS, Math.min(MAX_DELAY_SECONDS, delay));
+        mRingBuffer.setHeadOffset(secondsToSampleRoundedBytes(delay));
+        if (mReadSmoother != null) mReadSmoother.resetTo(mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
+    }
+
+    public void addToDelay(float delay) {
+        if (getCurrentDelay()+delay >= MAX_DELAY_SECONDS) {
+            Toast.makeText(mCtx, "Can not delay more than "+MAX_DELAY_SECONDS+" seconds", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (getCurrentDelay()+delay <= MIN_DELAY_SECONDS) {
+            Toast.makeText(mCtx, "Can not delay less than "+MIN_DELAY_SECONDS+" seconds", Toast.LENGTH_LONG).show();
+            return;
+        }
+        mRingBuffer.addToHeadOffset(secondsToSampleRoundedBytes(delay));
+        if (mReadSmoother != null) mReadSmoother.resetTo(mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
     }
 
     public long secondsToSampleRoundedBytes(double s) {
@@ -83,8 +97,7 @@ public class AudioPlayer {
         return val;
     }
 
-    public float getTargetDelay() {return mTargetDelay;}
-    public float getCurrentDelay() { return (mRingBuffer.getHeadPos()-mRingBuffer.getTailPos())/(float)mBytesPerSecond;}
+    public double getCurrentDelay() { return mWriteSmoother.getCurrentVal()-mReadSmoother.getCurrentVal();}
 
     class WriteThread extends Thread {
         @Override
@@ -121,10 +134,10 @@ public class AudioPlayer {
                             mRingBuffer.add(httpAudioBuffer, bufferInfo.size);
                             mDecoder.releaseOutputBuffer(outputIndex, false);
 
-                            /*if (mWriteSmoother == null) {
+                            if (mWriteSmoother == null) {
                                 mWriteSmoother = new TimeSmoother(SMOOTH_ALPHA, SMOOTH_GAMMA, mRingBuffer.getHeadPos()/(double)mBytesPerSecond, 1.0);
                             }
-                            mWriteSmoother.addVal(mRingBuffer.getHeadPos()/(double)mBytesPerSecond);*/
+                            mWriteSmoother.addVal(mRingBuffer.getHeadPos()/(double)mBytesPerSecond);
                             //Log.d(MainActivity.TAG,"###1 "+(mRingBuffer.getHeadPos()/(double)mBytesPerSecond)+" "+mWriteSmoother.getCurrentVal());
                         }
                     }
@@ -160,16 +173,10 @@ public class AudioPlayer {
                         continue;
                     }
 
-                    /*
                     if (mReadSmoother == null) {
                         mReadSmoother = new TimeSmoother(SMOOTH_ALPHA, SMOOTH_GAMMA, mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
                     }
                     mReadSmoother.addVal(mRingBuffer.getTailPos()/(double)mBytesPerSecond);
-
-                    if (mReadSmoother != null && mWriteSmoother != null) {
-                        Log.d(MainActivity.TAG,mWriteSmoother.getCurrentVal()+"-"+mReadSmoother.getCurrentVal());
-                        Log.d(MainActivity.TAG,"Drift="+(mWriteSmoother.getCurrentVal()-mReadSmoother.getCurrentVal()));
-                    }*/
 
                     if (audioTrack == null) {
                         audioTrack = new AudioTrack(
@@ -183,11 +190,7 @@ public class AudioPlayer {
                         audioTrack.play();
                     }
 
-                    //Log.d(MainActivity.TAG,"Wrote "+chunkSize);
-
                     audioTrack.write(delayedAudioBuffer, 0, chunkSize);
-
-                    if ((getCurrentDelay()-getTargetDelay()) > 1.0f) setTargetDelay(getTargetDelay());
                 }
             } catch (Exception e) {
                 mOk = false;

@@ -131,10 +131,10 @@ public class PlayerService extends Service {
         } else if (intent.getAction().equals(ACTION_DELAY)) {
             if (mPlayer != null) {
                 if (intent.hasExtra("delta")) {
-                    mPlayer.setTargetDelay(mPlayer.getTargetDelay() + intent.getFloatExtra("delta", 0.0f));
+                    mPlayer.addToDelay(((float)intent.getFloatExtra("delta", 0.0f)));
                 }
                 if (intent.hasExtra("absolute")) {
-                    mPlayer.setTargetDelay(intent.getFloatExtra("absolute", mPlayer.getTargetDelay()));
+                    mPlayer.setAbsoluteDelay(intent.getFloatExtra("absolute", (float)(mPlayer.getCurrentDelay())));
                 }
             }else {
                 Toast.makeText(this, R.string.stop_nothing_is_playing, Toast.LENGTH_SHORT).show();
@@ -158,8 +158,8 @@ public class PlayerService extends Service {
                         continue;
                     }
                     try {
-                        mPlayer = new AudioPlayer(httpSource);
-                        mPlayer.setTargetDelay(mCurrentDelay);
+                        mPlayer = new AudioPlayer(PlayerService.this, httpSource);
+                        mPlayer.setAbsoluteDelay(mCurrentDelay);
                         mPlayer.play();
                     } catch (Exception e) {
                         mStatus = "Error, retrying...";

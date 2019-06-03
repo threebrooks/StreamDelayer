@@ -26,6 +26,10 @@ public class RingBuffer {
         tail = head-offset;
     }
 
+    synchronized public void addToHeadOffset(long offset) {
+        tail -= offset;
+    }
+
     public float getHeadPercentage() {
         return wrapped(head)/(float)buffer.length;
     }
