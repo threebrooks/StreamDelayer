@@ -1,5 +1,7 @@
 package com.threebrooks.streamdelayer;
+import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -23,10 +25,12 @@ public class RingBuffer {
     }
 
     synchronized public void setHeadOffset(long offset) {
+        if (((head-offset) >= buffer.length) || ((head-offset) <= 0)) return;
         tail = head-offset;
     }
 
     synchronized public void addToHeadOffset(long offset) {
+        if (((head-(tail-offset)) >= buffer.length) || ((head-(tail-offset)) <= 0)) return;
         tail -= offset;
     }
 
@@ -42,7 +46,8 @@ public class RingBuffer {
 
     public long getTailPos() {return tail;}
 
-    synchronized public void add(byte[] toAdd, int size) throws Exception {
+    synchronized public int add(byte[] toAdd, int size) {
+        if (((head+size)-tail) >= buffer.length) return -1;
         if ((wrapped(head)+size) > buffer.length) {
             long firstHalf = buffer.length-wrapped(head);
             System.arraycopy(toAdd, 0, buffer, (int)wrapped(head), (int)firstHalf);
@@ -52,10 +57,10 @@ public class RingBuffer {
             System.arraycopy(toAdd, 0, buffer, (int)wrapped(head), size);
         }
         head += size;
-        if ((head-tail) >= buffer.length) throw new Exception("Buffer overflow");
+        return size;
     }
 
-    synchronized public int get(byte[] toGet, int size) throws Exception {
+    synchronized public int get(byte[] toGet, int size) {
         if (tail+size > head) return -1;
         if ((wrapped(tail)+size) > buffer.length) {
             long firstHalf = buffer.length-wrapped(tail);

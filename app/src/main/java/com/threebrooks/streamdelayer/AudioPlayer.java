@@ -22,9 +22,8 @@ public class AudioPlayer {
     private RingBuffer mRingBuffer = null;
 
     public static float MAX_DELAY_SECONDS  = 60.0f;
-    public static float MIN_DELAY_SECONDS  = 2.0f;
-    private static double SMOOTH_ALPHA = 0.9;
-    private static double SMOOTH_GAMMA = 0.9;
+    private static double SMOOTH_ALPHA = 0.5;
+    private static double SMOOTH_GAMMA = 0.5;
     private boolean mOk = false;
     private boolean mPlay = false;
 
@@ -56,7 +55,7 @@ public class AudioPlayer {
                 null, null, 0);
         mBytesPerSample = mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)*2;
         mBytesPerSecond = mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)*mBytesPerSample;
-        mRingBuffer = new RingBuffer((int)(1.1f*MAX_DELAY_SECONDS*mBytesPerSecond), 0);
+        mRingBuffer = new RingBuffer((int)(MAX_DELAY_SECONDS*mBytesPerSecond), 0);
 
         mOk = true;
         mPlay = true;
@@ -69,25 +68,12 @@ public class AudioPlayer {
 
     public boolean ok() {return mOk;}
 
-    public static float roundToFraction(float x, float resolution) {
-        return Math.round(x / resolution) * resolution;
-    }
-
     public void setAbsoluteDelay(float delay) {
-        delay = Math.max(MIN_DELAY_SECONDS, Math.min(MAX_DELAY_SECONDS, delay));
         mRingBuffer.setHeadOffset(secondsToSampleRoundedBytes(delay));
         if (mReadSmoother != null) mReadSmoother.resetTo(mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
     }
 
     public void addToDelay(float delay) {
-        if (getCurrentDelay()+delay >= MAX_DELAY_SECONDS) {
-            Toast.makeText(mCtx, "Can not delay more than "+MAX_DELAY_SECONDS+" seconds", Toast.LENGTH_LONG).show();
-            return;
-        }
-        if (getCurrentDelay()+delay <= MIN_DELAY_SECONDS) {
-            Toast.makeText(mCtx, "Can not delay less than "+MIN_DELAY_SECONDS+" seconds", Toast.LENGTH_LONG).show();
-            return;
-        }
         mRingBuffer.addToHeadOffset(secondsToSampleRoundedBytes(delay));
         if (mReadSmoother != null) mReadSmoother.resetTo(mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
     }
@@ -97,7 +83,10 @@ public class AudioPlayer {
         return val;
     }
 
-    public double getCurrentDelay() { return mWriteSmoother.getCurrentVal()-mReadSmoother.getCurrentVal();}
+    public double getCurrentDelay() {
+        if (mWriteSmoother == null || mReadSmoother == null) return 0.0;
+        return mWriteSmoother.getCurrentVal()-mReadSmoother.getCurrentVal();
+    }
 
     class WriteThread extends Thread {
         @Override
@@ -131,7 +120,9 @@ public class AudioPlayer {
 
                             outputBuffer.rewind();
                             outputBuffer.get(httpAudioBuffer, 0, bufferInfo.size);
-                            mRingBuffer.add(httpAudioBuffer, bufferInfo.size);
+                            while (mRingBuffer.add(httpAudioBuffer, bufferInfo.size) == -1) {
+                                Thread.sleep(100);
+                            };
                             mDecoder.releaseOutputBuffer(outputIndex, false);
 
                             if (mWriteSmoother == null) {
