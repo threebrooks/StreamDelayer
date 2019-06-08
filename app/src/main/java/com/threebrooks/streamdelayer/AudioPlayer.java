@@ -21,11 +21,14 @@ public class AudioPlayer {
     private MediaFormat mFormat = null;
     private RingBuffer mRingBuffer = null;
 
-    public static float MAX_DELAY_SECONDS  = 60.0f;
+    public static float MAX_DELAY_SECONDS  = 10*60.0f;
     private static double SMOOTH_ALPHA = 0.5;
     private static double SMOOTH_GAMMA = 0.5;
     private boolean mOk = false;
     private boolean mPlay = false;
+
+    WriteThread mWriteThread = null;
+    PlayThread mPlayThread = null;
 
     TimeSmoother mWriteSmoother = null;
     TimeSmoother mReadSmoother = null;
@@ -64,7 +67,24 @@ public class AudioPlayer {
     public float getHeadPercentage() {return mRingBuffer.getHeadPercentage();}
     public float getTailPercentage() {return mRingBuffer.getTailPercentage();}
 
-    public void stop() {mPlay = false;}
+    public void play(){
+        mWriteThread = new WriteThread();
+        mWriteThread.start();
+        mPlayThread = new PlayThread();
+        mPlayThread.start();
+    }
+
+    public void destroy() {
+        mPlay = false;
+        try {
+            if (mWriteThread != null) mWriteThread.join();
+            if (mPlayThread != null) mPlayThread.join();
+            mRingBuffer = null;
+            mDecoder = null;
+        } catch (Exception e) {
+            Log.d(MainActivity.TAG, e.getMessage());
+        }
+    }
 
     public boolean ok() {return mOk;}
 
@@ -188,10 +208,5 @@ public class AudioPlayer {
                 Log.d(MainActivity.TAG, e.getMessage());
             }
         }
-    }
-
-    public void play(){
-        new WriteThread().start();
-        new PlayThread().start();
     }
 }

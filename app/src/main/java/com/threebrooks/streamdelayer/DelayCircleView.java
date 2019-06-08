@@ -31,6 +31,15 @@ public class DelayCircleView extends View {
         canvas.drawText(text, cx - textBounds.exactCenterX(), cy - textBounds.exactCenterY(), paint);
     }
 
+    private String formatDelayString(double delay) {
+        int minutes = (int)(delay/60.0);
+        double seconds = delay-60.0*minutes;
+        String s = "Delay: ";
+        if (minutes > 0) s += minutes+"m";
+        s += String.format("%.1f",seconds)+"s";
+        return s;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -60,7 +69,7 @@ public class DelayCircleView extends View {
                     false,
                     p);
 
-            String delayText =  "Delay: "+String.format("%.1f",audioPlayer.getCurrentDelay())+"s";
+            String delayText = formatDelayString(audioPlayer.getCurrentDelay());
             p.setColor(ContextCompat.getColor(mCtx, R.color.fontPrimary));
             p.setTextSize(100.0f);
             p.setStyle(Paint.Style.FILL);

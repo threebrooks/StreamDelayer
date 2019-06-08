@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -30,6 +32,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,10 +147,27 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_links) {
+            try {
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse("https://github.com/threebrooks/StreamDelayer"));
+                startActivity(i);
+            } catch (Exception e) {
+                Toast(this, "Could not open link");
+            }
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public static void Toast(Context ctx, String t) {
+        Toast toast = Toast.makeText(ctx, t, Toast.LENGTH_LONG);
+        View view = toast.getView();
+        view.getBackground().setColorFilter(ContextCompat.getColor(ctx, R.color.purple200Grey), PorterDuff.Mode.SRC_IN);
+        TextView text = view.findViewById(android.R.id.message);
+        text.setBackgroundColor(ContextCompat.getColor(ctx, R.color.purple200Grey));
+        text.setTextColor(ContextCompat.getColor(ctx, R.color.fontPrimary));
+        toast.show();
     }
 }

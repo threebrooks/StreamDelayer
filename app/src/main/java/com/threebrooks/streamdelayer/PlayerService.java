@@ -121,7 +121,7 @@ public class PlayerService extends Service {
                     mLoadPlayThread.join();
                     mLoadPlayThread = null;
                 } else {
-                    Toast.makeText(this, R.string.stop_nothing_is_playing, Toast.LENGTH_SHORT).show();
+                    MainActivity.Toast(this, getResources().getString(R.string.stop_nothing_is_playing));
                 }
             } catch (Exception e) {
                 Log.d(MainActivity.TAG, e.getMessage());
@@ -137,7 +137,7 @@ public class PlayerService extends Service {
                     mPlayer.setAbsoluteDelay(intent.getFloatExtra("absolute", (float)(mPlayer.getCurrentDelay())));
                 }
             }else {
-                Toast.makeText(this, R.string.stop_nothing_is_playing, Toast.LENGTH_SHORT).show();
+                MainActivity.Toast(this, getResources().getString(R.string.stop_nothing_is_playing));
             }
         }
         return START_NOT_STICKY;
@@ -175,7 +175,8 @@ public class PlayerService extends Service {
                     }
                     if (!mPlay) {
                         mStatus = "Stopped";
-                        mPlayer.stop();
+                        mPlayer.destroy();
+                        mPlayer = null;
                         mWakelock.release();
                         mWifilock.release();
                     }

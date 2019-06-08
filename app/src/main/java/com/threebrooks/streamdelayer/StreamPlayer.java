@@ -8,8 +8,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.LinearLayoutManager;
@@ -82,13 +84,33 @@ public class StreamPlayer {
                     mAct.startService(delayIntent);
                     mStreamDelayTapMillisStart = 0;
                     mStreamDelayTapButton.setText("TAP");
+                    mStreamDelayTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.fontPrimary));
                 } else {
                     mStreamDelayTapMillisStart = System.currentTimeMillis();
-                    mStreamDelayTapButton.setText("...");
+                    updateTapButton();
+                    MainActivity.Toast(mAct,mAct.getResources().getString(R.string.tap_delay_start));
                 }
             }
         }
     };
+
+    private void updateTapButton() {
+        if (mStreamDelayTapMillisStart != 0) {
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    float secondsElapsed = (System.currentTimeMillis() - mStreamDelayTapMillisStart) / 1000.0f;
+                    mStreamDelayTapButton.setText(String.format("%.1f", secondsElapsed));
+                    mStreamDelayTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.purple200));
+                    updateTapButton();
+                }
+            }, 100);
+        } else {
+            mStreamDelayTapButton.setText("TAP");
+            mStreamDelayTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.fontPrimary));
+        }
+    }
 
     public void EditPlaylistEntry(final int pos, String url) {
         AlertDialog.Builder alert = new AlertDialog.Builder(mAct);
@@ -180,7 +202,7 @@ public class StreamPlayer {
                 }
             }
         } catch (Exception e) {
-            Toast.makeText(mAct, "Could not open "+uri.toString(), Toast.LENGTH_LONG);
+            MainActivity.Toast(mAct,"Could not open "+uri.toString());
         }
     }
 
