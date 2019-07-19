@@ -1,4 +1,4 @@
-# StreamDelayer
+# Sportscast Delayer
 
 You likely arrived at this site because you want to suggest a new internet radio to be included into the default list of Sportscast Delayer.
 
