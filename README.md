@@ -14,3 +14,5 @@ That said, if you have a link, send an email to doktorschrott@gmail.com, with th
 1) the stream link itself
 2) the suggested name for the stream
 3) the suggested category (e.g. Bundesliga, Premier League)
+
+Hope you enjoy the app!
