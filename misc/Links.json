@@ -9,12 +9,16 @@
       "url": "https://bvb-live.cast.addradio.de/bvb/live/mp3/high"
     },
     {
+      "name": "HSV NetRadio",
+      "url": "https://cdn.laola1.tv/hsv_live/audioplayer/HSV_Netradio_16_17.mp3"
+    },
+    {
       "name": "Köln FC-Radio",
       "url": "http://mp3.fckoeln.c.nmdn.net/fckoeln/livestream01.mp3"
     },
     {
-      "name": "HSV NetRadio",
-      "url": "https://cdn.laola1.tv/hsv_live/audioplayer/HSV_Netradio_16_17.mp3"
+      "name": "FSV Mainz 05er.fm",
+      "url": "http://audio.05er.tv/05er_128.mp3"
     },
     {
       "name": "WDR Event",

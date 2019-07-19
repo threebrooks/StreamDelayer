@@ -44,7 +44,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
-            android:background="@drawable/button_left"
+            android:background="@drawable/button_bottom_left"
             android:src="@drawable/ic_baseline_stop_24px"
             android:tint="@color/fontPrimary"
             style="?android:attr/buttonBarButtonStyle"/>
@@ -54,7 +54,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
-            android:background="@drawable/button_right"
+            android:background="@drawable/button_bottom_right"
             android:src="@drawable/ic_outline_playlist_add_24px"
             android:tint="@color/fontPrimary"
             style="?android:attr/buttonBarButtonStyle"/>

@@ -38,7 +38,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 public class StreamPlayer {
-    long mStreamDelayTapMillisStart = 0;
+    long mStreamDelayAudioEarlyTapMillisStart = 0;
+    long mStreamDelayVideoEarlyTapMillisStart = 0;
 
     View mRootView = null;
     Activity mAct = null;
@@ -47,7 +48,8 @@ public class StreamPlayer {
     AppCompatButton mStreamDelayMinusPoint5Button = null;
     AppCompatButton mStreamDelayPlusPoint5Button = null;
     AppCompatButton mStreamDelayPlus5Button = null;
-    AppCompatButton mStreamDelayTapButton = null;
+    AppCompatButton mStreamDelayAudioEarlyTapButton = null;
+    AppCompatButton mStreamDelayVideoEarlyTapButton = null;
     DelayCircleView mDelayCircleView = null;
 
     TabLayout mTabLayout = null;
@@ -77,38 +79,64 @@ public class StreamPlayer {
             } else if (v == mStreamDelayPlus5Button) {
                 delayIntent.putExtra("delta", +5.0f);
                 mAct.startService(delayIntent);
-            } else if (v == mStreamDelayTapButton) {
-                if (mStreamDelayTapMillisStart != 0) {
-                    float secondsElapsed = (System.currentTimeMillis()-mStreamDelayTapMillisStart)/1000.0f;
-                    delayIntent.putExtra("absolute", secondsElapsed);
+            } else if (v == mStreamDelayAudioEarlyTapButton) {
+                if (mStreamDelayAudioEarlyTapMillisStart != 0) {
+                    float secondsElapsed = (System.currentTimeMillis()-mStreamDelayAudioEarlyTapMillisStart)/1000.0f;
+                    delayIntent.putExtra("delta", secondsElapsed);
                     mAct.startService(delayIntent);
-                    mStreamDelayTapMillisStart = 0;
-                    mStreamDelayTapButton.setText("TAP");
-                    mStreamDelayTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.fontPrimary));
+                    mStreamDelayAudioEarlyTapMillisStart = 0;
+                    mStreamDelayAudioEarlyTapButton.setText("TAP");
+                    mStreamDelayAudioEarlyTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.fontPrimary));
                 } else {
-                    mStreamDelayTapMillisStart = System.currentTimeMillis();
-                    updateTapButton();
+                    mStreamDelayAudioEarlyTapMillisStart = System.currentTimeMillis();
+                    updateTapButtons();
+                    MainActivity.Toast(mAct,mAct.getResources().getString(R.string.tap_delay_start));
+                }
+            } else if (v == mStreamDelayVideoEarlyTapButton) {
+                if (mStreamDelayVideoEarlyTapMillisStart != 0) {
+                    float secondsElapsed = (System.currentTimeMillis()-mStreamDelayVideoEarlyTapMillisStart)/1000.0f;
+                    delayIntent.putExtra("delta", -secondsElapsed);
+                    mAct.startService(delayIntent);
+                    mStreamDelayVideoEarlyTapMillisStart = 0;
+                    mStreamDelayVideoEarlyTapButton.setText("TAP");
+                    mStreamDelayVideoEarlyTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.fontPrimary));
+                } else {
+                    mStreamDelayVideoEarlyTapMillisStart = System.currentTimeMillis();
+                    updateTapButtons();
                     MainActivity.Toast(mAct,mAct.getResources().getString(R.string.tap_delay_start));
                 }
             }
         }
     };
 
-    private void updateTapButton() {
-        if (mStreamDelayTapMillisStart != 0) {
+    private void updateTapButtons() {
+        if (mStreamDelayAudioEarlyTapMillisStart != 0) {
             final Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    float secondsElapsed = (System.currentTimeMillis() - mStreamDelayTapMillisStart) / 1000.0f;
-                    mStreamDelayTapButton.setText(String.format("%.1f", secondsElapsed));
-                    mStreamDelayTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.purple200));
-                    updateTapButton();
+                    float secondsElapsed = (System.currentTimeMillis() - mStreamDelayAudioEarlyTapMillisStart) / 1000.0f;
+                    mStreamDelayAudioEarlyTapButton.setText(String.format("%.1f", secondsElapsed));
+                    mStreamDelayAudioEarlyTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.purple200));
+                    updateTapButtons();
+                }
+            }, 100);
+        } else if (mStreamDelayVideoEarlyTapMillisStart != 0) {
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    float secondsElapsed = (System.currentTimeMillis() - mStreamDelayVideoEarlyTapMillisStart) / 1000.0f;
+                    mStreamDelayVideoEarlyTapButton.setText(String.format("%.1f", -secondsElapsed));
+                    mStreamDelayVideoEarlyTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.purple200));
+                    updateTapButtons();
                 }
             }, 100);
         } else {
-            mStreamDelayTapButton.setText("TAP");
-            mStreamDelayTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.fontPrimary));
+            mStreamDelayAudioEarlyTapButton.setText("TAP");
+            mStreamDelayAudioEarlyTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.fontPrimary));
+            mStreamDelayVideoEarlyTapButton.setText("TAP");
+            mStreamDelayVideoEarlyTapButton.setTextColor(ContextCompat.getColor(mAct, R.color.fontPrimary));
         }
     }
 
@@ -291,8 +319,10 @@ public class StreamPlayer {
         mStreamDelayPlusPoint5Button.setOnClickListener(mDelayButtonsCL);
         mStreamDelayPlus5Button = mRootView.findViewById(R.id.streamDelayPlus5Button);
         mStreamDelayPlus5Button.setOnClickListener(mDelayButtonsCL);
-        mStreamDelayTapButton = mRootView.findViewById(R.id.streamDelayTapButton);
-        mStreamDelayTapButton.setOnClickListener(mDelayButtonsCL);
+        mStreamDelayAudioEarlyTapButton = mRootView.findViewById(R.id.streamDelayAudioEarlyTapButton);
+        mStreamDelayAudioEarlyTapButton.setOnClickListener(mDelayButtonsCL);
+        mStreamDelayVideoEarlyTapButton = mRootView.findViewById(R.id.streamDelayVideoEarlyTapButton);
+        mStreamDelayVideoEarlyTapButton.setOnClickListener(mDelayButtonsCL);
 
         mPlaylistStopButton = mRootView.findViewById(R.id.playlistStopButton);
         mPlaylistStopButton.setOnClickListener(mPlaylistButtonsCL);

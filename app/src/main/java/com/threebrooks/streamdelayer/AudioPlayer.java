@@ -178,6 +178,7 @@ public class AudioPlayer {
                         delayedAudioBuffer = new byte[chunkSize];
                     }
 
+                    Log.d(MainActivity.TAG,"Reading from "+mRingBuffer.getTailPos());
                     int read = mRingBuffer.get(delayedAudioBuffer, chunkSize);
                     if (read == -1) {
                         Thread.sleep(100);

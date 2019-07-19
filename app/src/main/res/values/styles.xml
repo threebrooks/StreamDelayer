@@ -20,4 +20,19 @@
     </style>
    <!--  <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark" /> -->
 
+    <style name="Divider">
+        <item name="android:background">@color/fontPrimary</item>
+    </style>
+
+    <style name="Divider.Horizontal" parent="Divider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item> // You can change thickness here.
+
+    </style>
+
+    <style name="Divider.Vertical" parent="Divider">
+        <item name="android:layout_width">1dp</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
+
 </resources>

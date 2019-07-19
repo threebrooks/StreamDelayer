@@ -10,8 +10,8 @@ public class RingBuffer {
 
     private byte[] buffer;
 
-    private long tail;
-    private long head;
+    volatile private long tail;
+    volatile private long head;
 
     public RingBuffer(int n, long initHeadOffset) {
         buffer = new byte[n];
@@ -31,7 +31,9 @@ public class RingBuffer {
 
     synchronized public void addToHeadOffset(long offset) {
         if (((head-(tail-offset)) >= buffer.length) || ((head-(tail-offset)) <= 0)) return;
+        Log.d(MainActivity.TAG,"Tail before: "+tail);
         tail -= offset;
+        Log.d(MainActivity.TAG,"Tail after: "+tail);
     }
 
     public float getHeadPercentage() {

@@ -10,17 +10,26 @@
         android:id="@+id/delayCircleView"
         android:layout_width="match_parent"
         android:layout_height="0dip"
-        android:layout_weight="7"/>
+        android:layout_weight="5"/>
 
     <android.support.v4.widget.Space
         android:layout_width="wrap_content"
         android:layout_height="@dimen/button_row_gap" />
 
-    <!-- Delay buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginLeft="@dimen/button_row_gap"
+        android:layout_marginRight="@dimen/button_row_gap"
+        style="?android:attr/buttonBarStyle">
+      <!-- Delay buttons -->
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="2"
         android:orientation="horizontal"
         android:gravity="center"
         android:layout_marginLeft="@dimen/button_row_gap"
@@ -28,13 +37,23 @@
         style="?android:attr/buttonBarStyle">
 
         <Button
+            android:id="@+id/streamDelayVideoEarlyTapButton"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center_horizontal"
+            android:text="TAP"
+            android:background="@drawable/button_bottom_left"
+            style="?android:attr/buttonBarButtonStyle"/>
+
+        <Button
             android:id="@+id/streamDelayMinus5Button"
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
-            android:text="-5"
-            android:background="@drawable/button_left"
+            android:text="&lt;&lt;"
+            android:background="@drawable/button_bottom_center"
             style="?android:attr/buttonBarButtonStyle"/>
         <Button
             android:id="@+id/streamDelayMinusPoint5Button"
@@ -42,17 +61,18 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
-            android:text="-0.5"
-            android:background="@drawable/button_center"
+            android:text="&lt;"
+            android:background="@drawable/button_bottom_center"
             style="?android:attr/buttonBarButtonStyle"/>
+        <View style="@style/Divider.Vertical"/>
         <Button
             android:id="@+id/streamDelayPlusPoint5Button"
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
-            android:text="+0.5"
-            android:background="@drawable/button_center"
+            android:text="&gt;"
+            android:background="@drawable/button_bottom_center"
             style="?android:attr/buttonBarButtonStyle"/>
         <Button
             android:id="@+id/streamDelayPlus5Button"
@@ -60,18 +80,46 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical|center_horizontal"
             android:layout_weight="1"
-            android:text="+5"
-            android:background="@drawable/button_center"
+            android:text="&gt;&gt;"
+            android:background="@drawable/button_bottom_center"
             style="?android:attr/buttonBarButtonStyle"/>
         <Button
-            android:id="@+id/streamDelayTapButton"
+            android:id="@+id/streamDelayAudioEarlyTapButton"
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center_vertical|center_horizontal"
             android:text="TAP"
-            android:background="@drawable/button_right"
+            android:background="@drawable/button_bottom_right"
             style="?android:attr/buttonBarButtonStyle"/>
+      </LinearLayout>
+        <android.support.v4.widget.Space
+            android:layout_width="wrap_content"
+            android:layout_height="3dp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginLeft="@dimen/button_row_gap"
+            android:layout_marginRight="@dimen/button_row_gap"
+            style="?android:attr/buttonBarStyle">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical|center_horizontal"
+                android:textSize="12sp"
+                android:text="Video is early"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical|center_horizontal"
+                android:textSize="12sp"
+                android:text="Audio is early"/>
+        </LinearLayout>
     </LinearLayout>
 
     <android.support.v4.widget.Space
