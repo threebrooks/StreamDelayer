@@ -148,6 +148,11 @@ public class PlayerService extends Service {
         public void run() {
             while(mPlay) {
                 try {
+                    if (mPlayer != null) {
+                        mStatus = "Stopped";
+                        mPlayer.destroy();
+                        mPlayer = null;
+                    }
                     HttpMediaSource httpSource = null;
                     try {
                         httpSource = new HttpMediaSource(mUrl);

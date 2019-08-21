@@ -117,6 +117,13 @@ public class MainActivity extends AppCompatActivity {
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
 
+    @Override
+    protected void onDestroy() {
+        Intent intent = new Intent(this, PlayerService.class);
+        stopService(intent);
+        super.onDestroy();
+    }
+
     private ServiceConnection connection = new ServiceConnection() {
 
         @Override
