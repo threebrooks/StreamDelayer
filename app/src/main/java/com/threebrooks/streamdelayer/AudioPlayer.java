@@ -38,7 +38,7 @@ public class AudioPlayer {
 
     Context mCtx  = null;
 
-    public AudioPlayer(Context ctx, final HttpMediaSource mediaSource) throws Exception {
+    public AudioPlayer(Context ctx, final HttpMediaSource mediaSource, RingBuffer ringBuffer) throws Exception {
         mCtx = ctx;
         mMediaSource = mediaSource;
         mExtractor = new MediaExtractor();
@@ -58,7 +58,7 @@ public class AudioPlayer {
                 null, null, 0);
         mBytesPerSample = mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)*2;
         mBytesPerSecond = mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)*mBytesPerSample;
-        mRingBuffer = new RingBuffer((int)(MAX_DELAY_SECONDS*mBytesPerSecond), 0);
+        mRingBuffer = ringBuffer;
 
         mOk = true;
         mPlay = true;
@@ -88,7 +88,7 @@ public class AudioPlayer {
 
     public boolean ok() {return mOk;}
 
-    public void setAbsoluteDelay(float delay) {
+    public void setAbsoluteDelay(double delay) {
         mRingBuffer.setHeadOffset(secondsToSampleRoundedBytes(delay));
         if (mReadSmoother != null) mReadSmoother.resetTo(mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
     }
@@ -178,7 +178,7 @@ public class AudioPlayer {
                         delayedAudioBuffer = new byte[chunkSize];
                     }
 
-                    Log.d(MainActivity.TAG,"Reading from "+mRingBuffer.getTailPos());
+                    //Log.d(MainActivity.TAG,"Reading from "+mRingBuffer.getTailPos());
                     int read = mRingBuffer.get(delayedAudioBuffer, chunkSize);
                     if (read == -1) {
                         Thread.sleep(100);

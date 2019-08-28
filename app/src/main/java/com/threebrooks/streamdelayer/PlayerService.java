@@ -24,6 +24,8 @@ import android.widget.Toast;
 
 import java.net.URL;
 
+import static com.threebrooks.streamdelayer.AudioPlayer.MAX_DELAY_SECONDS;
+
 public class PlayerService extends Service {
     private static final String TAG = "PlayerService";
 
@@ -36,7 +38,6 @@ public class PlayerService extends Service {
 
     AudioPlayer mPlayer = null;
 
-    float mCurrentDelay = 0.0f;
     boolean mPlay = false;
     URL mUrl = null;
     String mName = "";
@@ -146,6 +147,9 @@ public class PlayerService extends Service {
 
     class LoadPlayThread extends Thread {
         public void run() {
+            int maxBytesPerSecond = 48000*2;
+            RingBuffer ringBuffer = new RingBuffer((int)(MAX_DELAY_SECONDS*maxBytesPerSecond), 0);
+            HttpMediaSource httpSource = null;
             while(mPlay) {
                 try {
                     if (mPlayer != null) {
@@ -153,7 +157,10 @@ public class PlayerService extends Service {
                         mPlayer.destroy();
                         mPlayer = null;
                     }
-                    HttpMediaSource httpSource = null;
+                    if (httpSource != null) {
+                        httpSource.stop();
+                    }
+
                     try {
                         httpSource = new HttpMediaSource(mUrl);
                     } catch (Exception e) {
@@ -163,8 +170,7 @@ public class PlayerService extends Service {
                         continue;
                     }
                     try {
-                        mPlayer = new AudioPlayer(PlayerService.this, httpSource);
-                        mPlayer.setAbsoluteDelay(mCurrentDelay);
+                        mPlayer = new AudioPlayer(PlayerService.this, httpSource, ringBuffer);
                         mPlayer.play();
                     } catch (Exception e) {
                         mStatus = "Error, retrying...";
@@ -174,12 +180,13 @@ public class PlayerService extends Service {
                     }
                     mWakelock.acquire();
                     mWifilock.acquire();
-                    while(mPlay && httpSource.ok() && mPlayer.ok()) {
+                    while(mPlay && mPlayer.ok()) {
                         mStatus = "Playing "+mName;
                         Thread.sleep(1000);
                     }
                     if (!mPlay) {
                         mStatus = "Stopped";
+                        httpSource.stop();
                         mPlayer.destroy();
                         mPlayer = null;
                         mWakelock.release();

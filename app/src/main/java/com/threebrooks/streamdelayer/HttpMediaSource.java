@@ -7,37 +7,57 @@ import android.util.Log;
 import java.io.BufferedInputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.List;
-import java.util.Map;
 
 public class HttpMediaSource extends MediaDataSource {
 
     BufferedInputStream mStream = null;
     HttpURLConnection mUrlConnection = null;
-    boolean mOk = false;
+    boolean mKeepTrying = true;
+    URL mUrl = null;
 
-    public HttpMediaSource(URL url) throws Exception {
-        mUrlConnection = (HttpURLConnection)url.openConnection();
-        Log.d(MainActivity.TAG, "Connection established");
-        mStream = new BufferedInputStream(mUrlConnection.getInputStream());
-        Log.d(MainActivity.TAG, "Got input stream");
-        mOk = true;
+    public HttpMediaSource(URL url) {
+        mUrl = url;
+        mKeepTrying = true;
     }
 
-    public boolean ok() {return mOk;}
+    public void openConnection() throws Exception {
+        mUrlConnection = (HttpURLConnection)mUrl.openConnection();
+        mStream = new BufferedInputStream(mUrlConnection.getInputStream());
+        Log.d(MainActivity.TAG, "Got input stream");
+    }
+
+    public void stop() {
+        mKeepTrying = false;
+        try {
+            mStream.close();
+        } catch (Exception e) {}
+    }
 
     @Override
     public long getSize() { return Long.MAX_VALUE;}
 
     @Override
     public int readAt(long position, byte[] outBuffer, int offset, int size) {
-        try {
-            return mStream.read(outBuffer, offset, size);
-        } catch (Exception e) {
-            Log.d(MainActivity.TAG, e.getMessage());
-            mOk = false;
-            return 0;
+        while(mKeepTrying) {
+            try {
+                if (mUrlConnection == null) {
+                    openConnection();
+                }
+                int read = mStream.read(outBuffer, offset, size);
+                if (read == -1 && mKeepTrying) return 0;
+                return read;
+            } catch (Exception e) {
+                try {
+                    try{mStream.close();}catch (Exception e2) {}
+                    mStream = null;
+                    mUrlConnection.disconnect();
+                    mUrlConnection = null;
+                    Log.d(MainActivity.TAG, e.getMessage());
+                    Thread.sleep(100);
+                } catch (Exception e3) {}
+            }
         }
+        return -1;
     }
 
     @Override
