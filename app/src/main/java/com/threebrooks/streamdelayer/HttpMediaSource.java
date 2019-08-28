@@ -7,6 +7,9 @@ import android.util.Log;
 import java.io.BufferedInputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class HttpMediaSource extends MediaDataSource {
 
@@ -23,7 +26,14 @@ public class HttpMediaSource extends MediaDataSource {
     public void openConnection() throws Exception {
         mUrlConnection = (HttpURLConnection)mUrl.openConnection();
         mStream = new BufferedInputStream(mUrlConnection.getInputStream());
-        Log.d(MainActivity.TAG, "Got input stream");
+        //mStream.skip(mStream.available()); // Skip to edge
+        byte[] dummyBuffer = new byte[1024];
+        long startTime = System.currentTimeMillis();
+        long skipped = 0;
+        do {
+            skipped += mStream.read(dummyBuffer, 0, dummyBuffer.length);
+        } while ((System.currentTimeMillis()-startTime) < 1000);
+        Log.d(MainActivity.TAG, "Got input stream, skipped "+skipped+" lead-in");
     }
 
     public void stop() {
