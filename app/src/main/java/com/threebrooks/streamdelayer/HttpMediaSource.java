@@ -15,47 +15,23 @@ public class HttpMediaSource extends MediaDataSource {
 
     BufferedInputStream mStream = null;
     HttpURLConnection mUrlConnection = null;
-    boolean mKeepTrying = true;
-    URL mUrl = null;
+    boolean mOk = true;
 
-    public HttpMediaSource(URL url) {
-        mUrl = url;
-        mKeepTrying = true;
-    }
-
-    public void openConnection() throws Exception {
-        mUrlConnection = (HttpURLConnection)mUrl.openConnection();
+    public HttpMediaSource(URL url) throws Exception {
+        mUrlConnection = (HttpURLConnection)url.openConnection();
         mStream = new BufferedInputStream(mUrlConnection.getInputStream());
-        //mStream.skip(mStream.available()); // Skip to edge
-        byte[] dummyBuffer = new byte[1024];
-        long startTime = System.currentTimeMillis();
-        long skipped = 0;
-        do {
-            skipped += mStream.read(dummyBuffer, 0, dummyBuffer.length);
-        } while ((System.currentTimeMillis()-startTime) < 1000);
-        Log.d(MainActivity.TAG, "Got input stream, skipped "+skipped+" lead-in");
+        mOk = true;
     }
 
-    public void stop() {
-        mKeepTrying = false;
-        try {
-            mStream.close();
-        } catch (Exception e) {}
-    }
+    public boolean isOk() { return mOk;}
 
     @Override
     public long getSize() { return Long.MAX_VALUE;}
 
     @Override
     public int readAt(long position, byte[] outBuffer, int offset, int size) {
-        while(mKeepTrying) {
             try {
-                if (mUrlConnection == null) {
-                    openConnection();
-                }
-                int read = mStream.read(outBuffer, offset, size);
-                if (read == -1 && mKeepTrying) return 0;
-                return read;
+                return mStream.read(outBuffer, offset, size);
             } catch (Exception e) {
                 try {
                     try{mStream.close();}catch (Exception e2) {}
@@ -64,10 +40,11 @@ public class HttpMediaSource extends MediaDataSource {
                     mUrlConnection = null;
                     Log.d(MainActivity.TAG, e.getMessage());
                     Thread.sleep(100);
+                    mOk = false;
                 } catch (Exception e3) {}
             }
-        }
-        return -1;
+            mOk = false;
+            return -1;
     }
 
     @Override

@@ -149,7 +149,6 @@ public class PlayerService extends Service {
         public void run() {
             int maxBytesPerSecond = 48000*2;
             RingBuffer ringBuffer = new RingBuffer((int)(MAX_DELAY_SECONDS*maxBytesPerSecond), 0);
-            HttpMediaSource httpSource = null;
             while(mPlay) {
                 try {
                     if (mPlayer != null) {
@@ -157,20 +156,9 @@ public class PlayerService extends Service {
                         mPlayer.destroy();
                         mPlayer = null;
                     }
-                    if (httpSource != null) {
-                        httpSource.stop();
-                    }
 
                     try {
-                        httpSource = new HttpMediaSource(mUrl);
-                    } catch (Exception e) {
-                        mStatus = "Connecting...";
-                        Log.d(MainActivity.TAG,e.getMessage());
-                        Thread.sleep(1000);
-                        continue;
-                    }
-                    try {
-                        mPlayer = new AudioPlayer(PlayerService.this, httpSource, ringBuffer);
+                        mPlayer = new AudioPlayer(PlayerService.this, mUrl, ringBuffer);
                         mPlayer.play();
                     } catch (Exception e) {
                         mStatus = "Error, retrying...";
@@ -180,13 +168,12 @@ public class PlayerService extends Service {
                     }
                     mWakelock.acquire();
                     mWifilock.acquire();
-                    while(mPlay && mPlayer.ok()) {
+                    while(mPlay) {
                         mStatus = "Playing "+mName;
                         Thread.sleep(1000);
                     }
                     if (!mPlay) {
                         mStatus = "Stopped";
-                        httpSource.stop();
                         mPlayer.destroy();
                         mPlayer = null;
                         mWakelock.release();

@@ -11,6 +11,7 @@ import android.support.transition.Transition;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.net.URL;
 import java.nio.ByteBuffer;
 
 public class AudioPlayer {
@@ -24,7 +25,6 @@ public class AudioPlayer {
     public static float MAX_DELAY_SECONDS  = 10*60.0f;
     private static double SMOOTH_ALPHA = 0.5;
     private static double SMOOTH_GAMMA = 0.5;
-    private boolean mOk = false;
     private boolean mPlay = false;
 
     WriteThread mWriteThread = null;
@@ -37,13 +37,18 @@ public class AudioPlayer {
     private int mBytesPerSample = 0;
 
     Context mCtx  = null;
+    URL mUrl = null;
 
-    public AudioPlayer(Context ctx, final HttpMediaSource mediaSource, RingBuffer ringBuffer) throws Exception {
+    public AudioPlayer(Context ctx, URL url, RingBuffer ringBuffer) {
         mCtx = ctx;
-        mMediaSource = mediaSource;
+        mUrl = url;
+        mRingBuffer = ringBuffer;
+    }
+
+    public void createDecoderPipeline() throws Exception {
+        mMediaSource = new HttpMediaSource(mUrl);
         mExtractor = new MediaExtractor();
         mExtractor.setDataSource(mMediaSource);
-        Log.d(MainActivity.TAG, "Set data source");
         mExtractor.selectTrack(0);
         mFormat = mExtractor.getTrackFormat(0);
 
@@ -58,16 +63,14 @@ public class AudioPlayer {
                 null, null, 0);
         mBytesPerSample = mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)*2;
         mBytesPerSecond = mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)*mBytesPerSample;
-        mRingBuffer = ringBuffer;
-
-        mOk = true;
-        mPlay = true;
+        mDecoder.start();
     }
 
     public float getHeadPercentage() {return mRingBuffer.getHeadPercentage();}
     public float getTailPercentage() {return mRingBuffer.getTailPercentage();}
 
     public void play(){
+        mPlay = true;
         mWriteThread = new WriteThread();
         mWriteThread.start();
         mPlayThread = new PlayThread();
@@ -85,8 +88,6 @@ public class AudioPlayer {
             Log.d(MainActivity.TAG, e.getMessage());
         }
     }
-
-    public boolean ok() {return mOk;}
 
     public void setAbsoluteDelay(double delay) {
         mRingBuffer.setHeadOffset(secondsToSampleRoundedBytes(delay));
@@ -111,56 +112,60 @@ public class AudioPlayer {
     class WriteThread extends Thread {
         @Override
         public void run() {
-            try {
-                mDecoder.start();
-                int inputIndex = mDecoder.dequeueInputBuffer(-1);
-                ByteBuffer inputBuffer = mDecoder.getInputBuffer(inputIndex);
-                MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-                byte[] httpAudioBuffer = null;
+            while(mPlay) {
+                try {
+                    createDecoderPipeline();
 
-                int read = mExtractor.readSampleData(inputBuffer, 0);
-                while (mPlay && read > 0) {
-                    mDecoder.queueInputBuffer(inputIndex, 0, read, mExtractor.getSampleTime(), 0);
+                    long startTime = System.currentTimeMillis();
 
-                    mExtractor.advance();
+                    int inputIndex = mDecoder.dequeueInputBuffer(-1);
+                    ByteBuffer inputBuffer = mDecoder.getInputBuffer(inputIndex);
+                    MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+                    byte[] httpAudioBuffer = null;
 
-                    int outputIndex = mDecoder.dequeueOutputBuffer(bufferInfo, -1);
-                    if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    int read = mExtractor.readSampleData(inputBuffer, 0);
+                    while (mPlay && read > 0) {
+                        mDecoder.queueInputBuffer(inputIndex, 0, read, mExtractor.getSampleTime(), 0);
 
-                    } else if (outputIndex >= 0) {
+                        mExtractor.advance();
 
-                        if (bufferInfo.size > 0) {
+                        int outputIndex = mDecoder.dequeueOutputBuffer(bufferInfo, -1);
+                        if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
 
-                            ByteBuffer outputBuffer = mDecoder.getOutputBuffer(outputIndex);
-                            if (httpAudioBuffer == null || httpAudioBuffer.length < bufferInfo.size) {
-                                httpAudioBuffer = new byte[bufferInfo.size];
+                        } else if (outputIndex >= 0) {
+
+                            if (bufferInfo.size > 0) {
+
+                                ByteBuffer outputBuffer = mDecoder.getOutputBuffer(outputIndex);
+                                if (httpAudioBuffer == null || httpAudioBuffer.length < bufferInfo.size) {
+                                    httpAudioBuffer = new byte[bufferInfo.size];
+                                }
+
+                                outputBuffer.rewind();
+                                outputBuffer.get(httpAudioBuffer, 0, bufferInfo.size);
+
+                                if (mWriteSmoother == null) {
+                                    mWriteSmoother = new TimeSmoother(SMOOTH_ALPHA, SMOOTH_GAMMA, mRingBuffer.getHeadPos() / (double) mBytesPerSecond, 1.0);
+                                }
+
+                                if ((System.currentTimeMillis()-startTime) > 1000) { // Skip the first second
+                                    while (mRingBuffer.add(httpAudioBuffer, bufferInfo.size) == -1) {
+                                        Thread.sleep(100);
+                                    }
+                                    mWriteSmoother.addVal(mRingBuffer.getHeadPos() / (double) mBytesPerSecond);
+                                }
+                                mDecoder.releaseOutputBuffer(outputIndex, false);
                             }
-
-                            //Log.d(MainActivity.TAG,"Read "+bufferInfo.size);
-
-                            outputBuffer.rewind();
-                            outputBuffer.get(httpAudioBuffer, 0, bufferInfo.size);
-                            while (mRingBuffer.add(httpAudioBuffer, bufferInfo.size) == -1) {
-                                Thread.sleep(100);
-                            };
-                            mDecoder.releaseOutputBuffer(outputIndex, false);
-
-                            if (mWriteSmoother == null) {
-                                mWriteSmoother = new TimeSmoother(SMOOTH_ALPHA, SMOOTH_GAMMA, mRingBuffer.getHeadPos()/(double)mBytesPerSecond, 1.0);
-                            }
-                            mWriteSmoother.addVal(mRingBuffer.getHeadPos()/(double)mBytesPerSecond);
-                            //Log.d(MainActivity.TAG,"###1 "+(mRingBuffer.getHeadPos()/(double)mBytesPerSecond)+" "+mWriteSmoother.getCurrentVal());
                         }
+
+                        inputIndex = mDecoder.dequeueInputBuffer(-1);
+                        inputBuffer = mDecoder.getInputBuffer(inputIndex);
+
+                        read = mExtractor.readSampleData(inputBuffer, 0);
                     }
-
-                    inputIndex = mDecoder.dequeueInputBuffer(-1);
-                    inputBuffer = mDecoder.getInputBuffer(inputIndex);
-
-                    read = mExtractor.readSampleData(inputBuffer, 0);
+                } catch (Exception e) {
+                    Log.d(MainActivity.TAG, e.getMessage());
                 }
-            } catch (Exception e) {
-                mOk = false;
-                Log.d(MainActivity.TAG, e.getMessage());
             }
         }
     }
@@ -168,45 +173,42 @@ public class AudioPlayer {
     class PlayThread extends Thread {
         @Override
         public void run() {
-            try {
-                byte[] delayedAudioBuffer = null;
-                AudioTrack audioTrack = null;
-                int chunkSize = mBytesPerSecond/4; // Quarter of a second
+            while(mBytesPerSecond == 0) {
+                try {Thread.sleep(100);} catch (Exception e) {}
+            }
+            byte[] delayedAudioBuffer = null;
+            AudioTrack audioTrack = null;
+            int chunkSize = mBytesPerSecond/4; // Quarter of a second
 
-                while (mPlay) {
-                    if (delayedAudioBuffer == null || delayedAudioBuffer.length < chunkSize) {
-                        delayedAudioBuffer = new byte[chunkSize];
-                    }
-
-                    //Log.d(MainActivity.TAG,"Reading from "+mRingBuffer.getTailPos());
-                    int read = mRingBuffer.get(delayedAudioBuffer, chunkSize);
-                    if (read == -1) {
-                        Thread.sleep(100);
-                        continue;
-                    }
-
-                    if (mReadSmoother == null) {
-                        mReadSmoother = new TimeSmoother(SMOOTH_ALPHA, SMOOTH_GAMMA, mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
-                    }
-                    mReadSmoother.addVal(mRingBuffer.getTailPos()/(double)mBytesPerSecond);
-
-                    if (audioTrack == null) {
-                        audioTrack = new AudioTrack(
-                                AudioManager.STREAM_MUSIC,
-                                mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE),
-                                mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO,
-                                AudioFormat.ENCODING_PCM_16BIT,
-                                chunkSize,
-                                AudioTrack.MODE_STREAM);
-
-                        audioTrack.play();
-                    }
-
-                    audioTrack.write(delayedAudioBuffer, 0, chunkSize);
+            while (mPlay) {
+                if (delayedAudioBuffer == null || delayedAudioBuffer.length < chunkSize) {
+                    delayedAudioBuffer = new byte[chunkSize];
                 }
-            } catch (Exception e) {
-                mOk = false;
-                Log.d(MainActivity.TAG, e.getMessage());
+
+                int read = mRingBuffer.get(delayedAudioBuffer, chunkSize);
+                if (read == -1) {
+                    try {Thread.sleep(100);} catch (Exception e) {}
+                    continue;
+                }
+
+                if (mReadSmoother == null) {
+                    mReadSmoother = new TimeSmoother(SMOOTH_ALPHA, SMOOTH_GAMMA, mRingBuffer.getTailPos()/(double)mBytesPerSecond, 1.0);
+                }
+                mReadSmoother.addVal(mRingBuffer.getTailPos()/(double)mBytesPerSecond);
+
+                if (audioTrack == null) {
+                    audioTrack = new AudioTrack(
+                            AudioManager.STREAM_MUSIC,
+                            mFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE),
+                            mFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO,
+                            AudioFormat.ENCODING_PCM_16BIT,
+                            chunkSize,
+                            AudioTrack.MODE_STREAM);
+
+                    audioTrack.play();
+                }
+
+                audioTrack.write(delayedAudioBuffer, 0, chunkSize);
             }
         }
     }
