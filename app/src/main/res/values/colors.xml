@@ -4,7 +4,7 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color> -->
     <color name="fontPrimary">#D3D3D3</color>
-    <color name="l2Whiten">#20FFFFFF</color>
+    <color name="l2Whiten">#10FFFFFF</color>
     <color name="l3Whiten">#40FFFFFF</color>
     <color name="materialDark">#121212</color>
     <color name="ringAudio">#880000</color>

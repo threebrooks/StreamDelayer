@@ -56,27 +56,27 @@ public class DelayCircleView extends View {
             mArcRect = new RectF(getWidth()/2.0f-radius, getHeight()/2.0f-radius, getWidth()/2.0f+radius, getHeight()/2.0f+radius);
         }
 
-        AudioPlayer audioPlayer = mPlayerService.mPlayer;
-        if (audioPlayer != null) {
-            p.setColor(ContextCompat.getColor(mCtx, R.color.purple200));
-            float headPerc = audioPlayer.getHeadPercentage();
-            float tailPerc = audioPlayer.getTailPercentage();
-            float sweepPerc = Math.max(0.01f,(headPerc - tailPerc+1.0f) % 1.0f);
-            canvas.drawArc(
-                    mArcRect,
-                    360.0f * tailPerc-90.0f,
-                    360.0f *sweepPerc,
-                    false,
-                    p);
-
-            String delayText = formatDelayString(audioPlayer.getCurrentDelay());
-            p.setColor(ContextCompat.getColor(mCtx, R.color.fontPrimary));
-            p.setTextSize(100.0f);
-            p.setStyle(Paint.Style.FILL);
-            drawTextCentered(canvas, p, delayText, getWidth()/2.0f, getHeight()/2.0f);
-        }
-
         if (mPlayerService != null) {
+            AudioPlayer audioPlayer = mPlayerService.mPlayer;
+            if (audioPlayer != null) {
+                p.setColor(ContextCompat.getColor(mCtx, R.color.purple200));
+                float headPerc = audioPlayer.getHeadPercentage();
+                float tailPerc = audioPlayer.getTailPercentage();
+                float sweepPerc = Math.max(0.01f,(headPerc - tailPerc+1.0f) % 1.0f);
+                canvas.drawArc(
+                        mArcRect,
+                        360.0f * tailPerc-90.0f,
+                        360.0f *sweepPerc,
+                        false,
+                        p);
+
+                String delayText = formatDelayString(audioPlayer.getCurrentDelay());
+                p.setColor(ContextCompat.getColor(mCtx, R.color.fontPrimary));
+                p.setTextSize(100.0f);
+                p.setStyle(Paint.Style.FILL);
+                drawTextCentered(canvas, p, delayText, getWidth()/2.0f, getHeight()/2.0f);
+            }
+
             String statusText = mPlayerService.getStatus();
             p.setColor(ContextCompat.getColor(mCtx, R.color.fontPrimary));
             p.setTextSize(50.0f);
